@@ -81,7 +81,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                         .fg(Color::Black)
                         .bg(Color::Rgb(180, 190, 254))
                 } else if is_fav {
-                    Style::default().fg(Color::Blue)
+                    Style::default().fg(Color::Rgb(203, 166, 247))
                 } else {
                     Style::default().fg(Color::Rgb(180, 190, 224))
                 };
