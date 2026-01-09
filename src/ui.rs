@@ -68,7 +68,6 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                 .collect()
         }
     } else if app.in_system {
-        // ROMs from JSON with scroll
         app.roms
             .iter()
             .skip(app.roms_scroll_offset)
@@ -84,10 +83,15 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                 } else if is_fav {
                     Style::default().fg(Color::Blue)
                 } else {
-                    Style::default().fg(Color::Rgb(180, 190, 254))
+                    Style::default().fg(Color::Rgb(180, 190, 224))
                 };
 
-                ListItem::new(Line::from(Span::styled(r.title.clone(), style)))
+                let icon = if is_fav { "󰋑 " } else { "󰊖 " };
+
+                ListItem::new(Line::from(vec![
+                    Span::styled(icon, style),
+                    Span::styled(r.title.clone(), style),
+                ]))
             })
             .collect()
     } else {
@@ -111,7 +115,10 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                     Style::default().fg(Color::Rgb(180, 190, 254))
                 };
 
-                ListItem::new(Line::from(Span::styled(name.to_string(), style)))
+                ListItem::new(Line::from(vec![
+                    Span::styled(" ", style),
+                    Span::styled(name, style),
+                ]))
             })
             .collect()
     };
@@ -156,7 +163,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                         .fg(Color::Black)
                 } else {
                     Style::default()
-                        .bg(Color::Rgb(180, 190, 244))
+                        .bg(Color::Rgb(203, 195, 245))
                         .fg(Color::Black)
                 };
 

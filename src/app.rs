@@ -454,9 +454,15 @@ impl App {
             &emux_path.to_string_lossy()
         );
 
+        let duckstation_path = format!(
+            "'{}/emulators/duckstation/DuckStation-x64.AppImage'",
+            &emux_path.to_string_lossy()
+        );
+
         // Prepare command with variable substitution
         let mut command_str = selected_command.command.clone();
         command_str = command_str.replace("$RETROARCH", &retroarch_path);
+        command_str = command_str.replace("$DUCKSTATION", &duckstation_path);
         command_str = command_str.replace("$GAME_DOWNLOADED", &game_downloaded);
         command_str.push_str(" >/dev/null 2>&1 &");
 
