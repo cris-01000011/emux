@@ -10,6 +10,7 @@ use ratatui::{
     },
 };
 
+mod actions;
 mod app;
 mod ui;
 
@@ -44,53 +45,47 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<()> {
     loop {
-        let _ = terminal.draw(|f| ui(f, app));
+        if let Err(error) = terminal.draw(|frame| ui(frame, app)) {
+            eprint!("Error at print TUI: {}", error)
+        }
 
         if let Event::Key(key) = event::read()? {
             if key.kind == KeyEventKind::Release {
                 continue;
             }
 
-            // Handle search mode input
             if app.in_search_mode {
                 match key.code {
                     KeyCode::Esc => app.stop_search(),
+                    KeyCode::Enter => app.stop_search(),
                     KeyCode::Backspace => app.remove_search_char(),
-                    KeyCode::Enter => {
-                        app.stop_search();
-                        app.enter(); // Execute action on selected result
-                    }
                     KeyCode::Up => app.search_up(),
                     KeyCode::Down => app.search_down(),
-                    KeyCode::Char(c) => app.add_search_char(c),
+                    KeyCode::Char(char) => app.add_search_char(char),
                     _ => {}
                 }
                 continue;
             }
 
-            match key.code {
-                KeyCode::Up => app.move_up(),
-                KeyCode::Down => app.move_down(),
-                KeyCode::Right => app.enter(),
-                KeyCode::Enter => app.enter(),
-                KeyCode::Left => app.go_back(),
-                KeyCode::Backspace => app.go_back(),
-                KeyCode::Char('q') => return Ok(()),
-                KeyCode::Char('x') => app.jump_to_random(),
-                KeyCode::Char('b') => app.open_browser_search(),
-                KeyCode::Char('s') => app.start_search(),
-                KeyCode::Char('f') => app.toggle_favorite(),
-                KeyCode::Char('g') => app.go_to_first_item(),
-                KeyCode::Char('G') => app.go_to_last_item(),
-                KeyCode::Tab => {
-                    if !app.in_command_selection {
-                        app.toggle_command_selection();
-                    } else {
-                        app.next_command();
-                    }
+            if key.kind == KeyEventKind::Press {
+                match key.code {
+                    KeyCode::Up => app.move_up(),
+                    KeyCode::Down => app.move_down(),
+                    KeyCode::Right => app.open_folder(),
+                    KeyCode::Left => app.go_back(),
+                    KeyCode::Enter => app.open_file_folder(),
+                    KeyCode::Backspace => app.go_back(),
+                    KeyCode::Tab => app.next_command(),
+                    KeyCode::BackTab => app.prev_command(),
+                    KeyCode::Char('b') => app.open_browser_search(),
+                    KeyCode::Char('f') => app.toggle_favorite(),
+                    KeyCode::Char('g') => app.go_to_first_item(),
+                    KeyCode::Char('G') => app.go_to_last_item(),
+                    KeyCode::Char('s') => app.start_search(),
+                    KeyCode::Char('x') => app.jump_to_random(),
+                    KeyCode::Char('q') => return Ok(()),
+                    _ => {}
                 }
-                KeyCode::BackTab => app.prev_command(),
-                _ => {}
             }
         }
     }

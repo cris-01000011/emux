@@ -118,7 +118,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
 
     let list = List::new(items).block(
         Block::default()
-            .borders(Borders::BOTTOM)
+            .borders(Borders::TOP | Borders::BOTTOM)
             .border_style(Color::Rgb(203, 166, 247)),
     );
 

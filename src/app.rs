@@ -285,12 +285,8 @@ impl App {
         }
     }
 
-    pub fn enter(&mut self) {
+    pub fn open_folder(&mut self) {
         if self.in_system {
-            // Download ROM to current directory
-            if let Err(e) = self.download_rom() {
-                eprintln!("Error downloading ROM: {}", e);
-            }
             return;
         }
 
@@ -299,6 +295,16 @@ impl App {
                 self.load_json_system(path);
                 return;
             }
+        }
+    }
+
+    pub fn open_file_folder(&mut self) {
+        if !self.in_system {
+            return self.open_folder();
+        }
+
+        if let Err(e) = self.download_rom() {
+            eprintln!("Error downloading ROM: {}", e);
         }
     }
 
@@ -506,12 +512,6 @@ impl App {
             .find(|sc| sc.system == clean_system)
             .map(|sc| sc.commands.clone())
             .unwrap_or_default()
-    }
-
-    pub fn toggle_command_selection(&mut self) {
-        if self.in_system && !self.get_current_commands().is_empty() {
-            self.in_command_selection = !self.in_command_selection;
-        }
     }
 
     pub fn next_command(&mut self) {
