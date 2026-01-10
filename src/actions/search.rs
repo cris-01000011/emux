@@ -6,6 +6,7 @@ impl App {
         self.search_query.clear();
         self.search_results.clear();
         self.search_selected = 0;
+        self.update_search_results();
     }
 
     pub fn stop_search(&mut self) {
