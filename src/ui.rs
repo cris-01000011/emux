@@ -39,11 +39,17 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                             .fg(Color::Black)
                             .bg(Color::Rgb(180, 190, 254))
                     } else if is_fav {
-                        Style::default().fg(Color::Blue)
+                        Style::default().fg(Color::Rgb(203, 166, 247))
                     } else {
-                        Style::default().fg(Color::Rgb(180, 190, 254))
+                        Style::default().fg(Color::Rgb(180, 190, 224))
                     };
-                    ListItem::new(Line::from(Span::styled(rom.title.clone(), style)))
+
+                    let icon = if is_fav { "󰋑 " } else { "󰊖 " };
+
+                    ListItem::new(Line::from(vec![
+                        Span::styled(icon, style),
+                        Span::styled(rom.title.clone(), style),
+                    ]))
                 })
                 .collect()
         } else {
@@ -63,6 +69,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
                     } else {
                         Style::default().fg(Color::Rgb(180, 190, 254))
                     };
+
                     ListItem::new(Line::from(Span::styled(name.to_string(), style)))
                 })
                 .collect()
