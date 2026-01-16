@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::Rect,
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem},
@@ -8,29 +8,48 @@ use ratatui::{
 use crate::app::App;
 
 pub fn render_main_list(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
-    let items: Vec<ListItem> = if app.in_search_mode {
-        if app.in_system {
-            render_search_rom_items(app)
-        } else {
-            render_search_system_items(app)
-        }
-    } else if app.in_system {
-        render_rom_items(app)
-    } else {
-        render_system_items(app)
+    let horizontal = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
+        .split(area);
+
+    let left_panel = lists_area(app);
+    frame.render_widget(left_panel, horizontal[0]);
+
+    let right_panel = items_in_list_area(app);
+    frame.render_widget(right_panel, horizontal[1]);
+}
+
+fn lists_area(app: &App) -> List<'_> {
+    let items = match (app.in_search_mode, app.in_system) {
+        (true, false) => searched_lists(app),
+        (false, false) => lists(app),
+        _ => lists(app), // no items to show in other states
     };
 
-    let list = List::new(items).block(
+    List::new(items).block(
         Block::default()
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .border_style(Color::Rgb(137, 180, 250)),
-    );
-
-    frame.render_widget(list, area);
+    )
 }
 
-fn render_search_rom_items(app: &App) -> Vec<ListItem<'_>> {
+fn items_in_list_area(app: &App) -> List<'_> {
+    let items = match (app.in_search_mode, app.in_system) {
+        (true, true) => searched_items_in_list(app),
+        _ => items_in_list(app),
+    };
+
+    List::new(items).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .border_style(Color::Rgb(137, 180, 250)),
+    )
+}
+
+fn searched_items_in_list(app: &App) -> Vec<ListItem<'_>> {
     app.search_results
         .iter()
         .enumerate()
@@ -58,7 +77,7 @@ fn render_search_rom_items(app: &App) -> Vec<ListItem<'_>> {
         .collect()
 }
 
-fn render_search_system_items(app: &App) -> Vec<ListItem<'_>> {
+fn searched_lists(app: &App) -> Vec<ListItem<'_>> {
     app.search_results
         .iter()
         .enumerate()
@@ -84,7 +103,7 @@ fn render_search_system_items(app: &App) -> Vec<ListItem<'_>> {
         .collect()
 }
 
-fn render_rom_items(app: &App) -> Vec<ListItem<'_>> {
+fn items_in_list(app: &App) -> Vec<ListItem<'_>> {
     app.roms
         .iter()
         .skip(app.roms_scroll_offset)
@@ -123,7 +142,7 @@ fn render_rom_items(app: &App) -> Vec<ListItem<'_>> {
         .collect()
 }
 
-fn render_system_items(app: &App) -> Vec<ListItem<'_>> {
+fn lists(app: &App) -> Vec<ListItem<'_>> {
     app.entries
         .iter()
         .skip(app.scroll_offset)
