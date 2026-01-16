@@ -1,3 +1,2 @@
-pub mod commands_footer;
+pub mod header;
 pub mod main_list;
-pub mod search_popup;

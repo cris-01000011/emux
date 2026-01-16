@@ -2,7 +2,7 @@ use ratatui::{
     layout::Rect,
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, BorderType, Borders, List, ListItem},
 };
 
 use crate::app::App;
@@ -22,8 +22,9 @@ pub fn render_main_list(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
 
     let list = List::new(items).block(
         Block::default()
-            .borders(Borders::TOP | Borders::BOTTOM)
-            .border_style(Color::Rgb(203, 166, 247)),
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .border_style(Color::Rgb(137, 180, 250)),
     );
 
     frame.render_widget(list, area);
@@ -95,17 +96,27 @@ fn render_rom_items(app: &App) -> Vec<ListItem<'_>> {
             let style = if actual_index == app.selected {
                 Style::default()
                     .fg(Color::Black)
-                    .bg(Color::Rgb(180, 190, 254))
+                    .bg(Color::Rgb(148, 226, 213))
             } else if is_fav {
-                Style::default().fg(Color::Rgb(203, 166, 247))
+                Style::default().fg(Color::Rgb(245, 194, 231))
             } else {
-                Style::default().fg(Color::Rgb(180, 190, 224))
+                Style::default().fg(Color::Rgb(148, 226, 213))
             };
 
             let icon = if is_fav { "󰋑 " } else { "󰊖 " };
 
+            let style_icon = if actual_index == app.selected {
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(Color::Rgb(148, 226, 213))
+            } else if is_fav {
+                Style::default().fg(Color::Rgb(245, 194, 231))
+            } else {
+                Style::default().fg(Color::Rgb(249, 226, 175))
+            };
+
             ListItem::new(Line::from(vec![
-                Span::styled(icon, style),
+                Span::styled(icon, style_icon),
                 Span::styled(r.title.clone(), style),
             ]))
         })
@@ -127,9 +138,9 @@ fn render_system_items(app: &App) -> Vec<ListItem<'_>> {
             let style = if actual_index == app.selected {
                 Style::default()
                     .fg(Color::Black)
-                    .bg(Color::Rgb(180, 190, 254))
+                    .bg(Color::Rgb(137, 180, 250))
             } else {
-                Style::default().fg(Color::Rgb(180, 190, 254))
+                Style::default().fg(Color::Rgb(137, 180, 250))
             };
 
             ListItem::new(Line::from(vec![
