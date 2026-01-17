@@ -7,6 +7,7 @@ use crate::app::App;
 pub struct FavoriteEntry {
     pub list: String,
     pub title: String,
+    pub url: String,
 }
 
 impl App {
@@ -45,6 +46,7 @@ impl App {
         let favorite = FavoriteEntry {
             list: self.current_list.clone(),
             title: selected_item.title.clone(),
+            url: selected_item.url.clone(),
         };
 
         if let Some(pos) = self

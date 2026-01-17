@@ -72,7 +72,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 match key.code {
                     KeyCode::Up => app.move_up(),
                     KeyCode::Down => app.move_down(),
-                    KeyCode::Right => app.open_folder(),
+                    KeyCode::Right => app.open_list(),
                     KeyCode::Left => app.go_back(),
                     KeyCode::Enter => app.open_file_folder(),
                     KeyCode::Backspace => app.go_back(),

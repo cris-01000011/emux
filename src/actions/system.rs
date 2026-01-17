@@ -49,6 +49,12 @@ impl App {
             return;
         };
 
+        self.current_list = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+            .to_string();
+
         let path_str = self.current_path.to_string_lossy().to_string();
         self.directory_selections
             .insert(path_str.clone(), self.selected);

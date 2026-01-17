@@ -110,8 +110,8 @@ impl App {
 
         app.load_dir(start);
         app.load_lists_commands();
-        app.load_favorites();
         app.load_list();
+        app.load_favorites();
 
         app
     }

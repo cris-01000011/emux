@@ -1,5 +1,4 @@
 use rand::Rng;
-use std::path::PathBuf;
 
 use crate::app::App;
 
@@ -62,22 +61,9 @@ impl App {
         }
     }
 
-    pub fn open_folder(&mut self) {
-        if self.in_list {
-            return;
-        }
-
-        if let Some(path) = self.entries.get(self.selected).cloned() {
-            if path.extension().and_then(|s| s.to_str()) == Some("json") {
-                self.enter_to_list(path);
-                return;
-            }
-        }
-    }
-
     pub fn open_file_folder(&mut self) {
         if !self.in_list {
-            return self.open_folder();
+            return self.open_list();
         }
 
         if let Err(e) = self.download_rom() {
@@ -95,7 +81,6 @@ impl App {
                 .insert(self.current_list.clone(), self.roms_scroll_offset);
 
             self.in_list = false;
-            self.current_list.clear();
             self.selected_command = 0;
             self.in_command_selection = false;
             self.roms_scroll_offset = 0;
@@ -115,14 +100,12 @@ impl App {
         }
     }
 
-    fn enter_to_list(&mut self, path: PathBuf) {
-        self.load_list();
+    pub fn open_list(&mut self) {
+        if self.in_list {
+            return;
+        }
 
-        self.current_list = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown")
-            .to_string();
+        self.load_list();
 
         self.in_list = true;
 
@@ -131,11 +114,13 @@ impl App {
             .get(&self.current_list)
             .copied()
             .unwrap_or(0);
+
         self.selected_command = self
             .command_selections
             .get(&self.current_list)
             .copied()
             .unwrap_or(0);
+
         self.in_command_selection = true;
 
         self.roms_scroll_offset = self

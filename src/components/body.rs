@@ -110,9 +110,9 @@ fn items_in_list(
         .iter()
         .skip(app.roms_scroll_offset)
         .enumerate()
-        .map(|(i, r)| {
+        .map(|(i, item)| {
             let actual_index = i + app.roms_scroll_offset;
-            let is_fav = app.is_favorite(&app.current_list, &r.title);
+            let is_fav = app.is_favorite(&app.current_list, &item.title);
 
             let style = if actual_index == app.selected && app.in_list {
                 selected_style
@@ -134,7 +134,7 @@ fn items_in_list(
 
             ListItem::new(Line::from(vec![
                 Span::styled(icon, style_icon),
-                Span::styled(r.title.clone(), style),
+                Span::styled(item.title.clone(), style),
             ]))
         })
         .collect()
