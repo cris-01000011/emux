@@ -79,6 +79,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Tab => app.next_command(),
                     KeyCode::BackTab => app.prev_command(),
                     KeyCode::Char('b') => app.open_browser_search(),
+                    KeyCode::Char('F') => app.toggle_favorites_mode(),
                     KeyCode::Char('f') => app.toggle_favorite(),
                     KeyCode::Char('g') => app.go_to_first_item(),
                     KeyCode::Char('G') => app.go_to_last_item(),

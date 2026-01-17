@@ -45,6 +45,7 @@ pub struct App {
 
     // Favorites state
     pub favorites: Vec<FavoriteEntry>,
+    pub favorites_mode: bool,
 
     // Memory for last selections
     pub directory_selections: HashMap<String, usize>,
@@ -100,6 +101,7 @@ impl App {
             search_selected: 0,
 
             favorites: Vec::new(),
+            favorites_mode: false,
 
             directory_selections: HashMap::new(),
             list_selections: HashMap::new(),

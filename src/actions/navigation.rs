@@ -109,11 +109,19 @@ impl App {
 
         self.in_list = true;
 
-        self.selected = self
+        let index_item_selected = self
             .list_selections
             .get(&self.current_list)
             .copied()
             .unwrap_or(0);
+
+        if !self.favorites_mode
+            || (self.favorites_mode && index_item_selected <= self.roms.len() - 1)
+        {
+            self.selected = index_item_selected;
+        } else {
+            self.selected = self.roms.len() - 1;
+        }
 
         self.selected_command = self
             .command_selections
