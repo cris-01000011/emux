@@ -108,6 +108,7 @@ impl App {
         app.load_dir(start);
         app.load_system_commands();
         app.load_favorites();
+        app.load_list();
 
         app
     }
@@ -146,7 +147,6 @@ impl App {
             .unwrap_or(0);
 
         self.in_system = false;
-        self.roms.clear();
         self.current_system.clear();
         self.selected_command = 0;
         self.in_command_selection = false;

@@ -30,7 +30,9 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
         .title("Search");
 
     let search_text = format!("{}", app.search_query);
-    let search_paragraph = Paragraph::new(search_text).block(search_block);
+    let search_paragraph = Paragraph::new(search_text)
+        .style(Color::Rgb(180, 190, 254))
+        .block(search_block);
 
     frame.render_widget(search_paragraph, chunks[0]);
 
@@ -44,7 +46,6 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
     frame.render_widget(paragraph, chunks[1]);
 }
 
-// Generate the footer tabs as a single Line
 fn generate_tabs(
     app: &App,
     commands: Vec<Command>,
@@ -61,13 +62,13 @@ fn generate_tabs(
     }
 
     for (i, cmd) in commands.iter().enumerate() {
-        let style = if app.in_command_selection && i == app.selected_command {
+        let style = if app.in_system && i == app.selected_command {
             selected_style
         } else {
             normal_style
         };
 
-        let text = if app.in_command_selection && i == app.selected_command {
+        let text = if app.in_system && i == app.selected_command {
             format!(" {} ", cmd.name)
         } else {
             format!("  {}  ", i + 1)

@@ -21,6 +21,8 @@ impl App {
                 self.entries.len().saturating_sub(1)
             };
         }
+
+        self.load_list();
     }
 
     pub fn move_down(&mut self) {
@@ -35,6 +37,8 @@ impl App {
         } else {
             self.selected = 0;
         }
+
+        self.load_list();
     }
 
     pub fn go_to_first_item(&mut self) {
@@ -72,7 +76,7 @@ impl App {
 
         if let Some(path) = self.entries.get(self.selected).cloned() {
             if path.extension().and_then(|s| s.to_str()) == Some("json") {
-                self.load_json_system(path);
+                self.enter_to_list(path);
                 return;
             }
         }
@@ -100,11 +104,10 @@ impl App {
 
             // return to system list
             self.in_system = false;
-            self.roms.clear();
             self.current_system.clear();
             self.selected_command = 0;
             self.in_command_selection = false;
-            self.roms_scroll_offset = 0; // Reset ROM scroll offset
+            self.roms_scroll_offset = 0;
 
             // Restore directory selection for this path
             let path_str = self.current_path.to_string_lossy().to_string();
@@ -113,38 +116,17 @@ impl App {
                 .get(&path_str)
                 .copied()
                 .unwrap_or(0);
+
             return;
         }
 
         if self.current_path == Self::games_path() {
             return;
         }
-
-        if let Some(parent) = self.current_path.parent() {
-            if parent.starts_with(Self::games_path()) {
-                self.load_dir(parent.to_path_buf());
-            }
-        }
     }
 
-    fn load_json_system(&mut self, path: PathBuf) {
-        // Save current directory selection and scroll before entering system
-        let path_str = self.current_path.to_string_lossy().to_string();
-        self.directory_selections
-            .insert(path_str.clone(), self.selected);
-        self.directory_scroll_selections
-            .insert(path_str, self.scroll_offset);
-
-        let data = std::fs::read_to_string(&path).unwrap_or_default();
-        match serde_json::from_str::<Vec<RomEntry>>(&data) {
-            Ok(roms) => {
-                self.roms = roms;
-            }
-            Err(e) => {
-                eprintln!("Error parsing JSON for {}: {}", path.display(), e);
-                self.roms = Vec::new();
-            }
-        }
+    fn enter_to_list(&mut self, path: PathBuf) {
+        self.load_list();
 
         // Extract system name from filename (handle quotes properly)
         self.current_system = path
@@ -174,5 +156,34 @@ impl App {
             .get(&self.current_system)
             .copied()
             .unwrap_or(0);
+    }
+
+    pub fn load_list(&mut self) {
+        let path = match (!self.in_system, self.entries.get(self.selected).cloned()) {
+            (true, Some(p)) if p.extension().and_then(|s| s.to_str()) == Some("json") => Some(p),
+            _ => None,
+        };
+
+        let Some(path) = path else {
+            return;
+        };
+
+        let path_str = self.current_path.to_string_lossy().to_string();
+        self.directory_selections
+            .insert(path_str.clone(), self.selected);
+        self.directory_scroll_selections
+            .insert(path_str, self.scroll_offset);
+
+        let data = std::fs::read_to_string(&path).unwrap_or_default();
+
+        match serde_json::from_str::<Vec<RomEntry>>(&data) {
+            Ok(roms) => {
+                self.roms = roms;
+            }
+            Err(e) => {
+                eprintln!("Error parsing JSON for {}: {}", path.display(), e);
+                self.roms = Vec::new();
+            }
+        }
     }
 }

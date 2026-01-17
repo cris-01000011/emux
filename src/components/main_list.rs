@@ -13,18 +13,24 @@ pub fn render_main_list(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
         .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
         .split(area);
 
-    let left_panel = lists_area(app);
+    let left_panel = left_panel_items(app);
     frame.render_widget(left_panel, horizontal[0]);
 
-    let right_panel = items_in_list_area(app);
+    let right_panel = right_panel_items(app);
     frame.render_widget(right_panel, horizontal[1]);
 }
 
-fn lists_area(app: &App) -> List<'_> {
-    let items = match (app.in_search_mode, app.in_system) {
-        (true, false) => searched_lists(app),
-        (false, false) => lists(app),
-        _ => lists(app), // no items to show in other states
+fn left_panel_items(app: &App) -> List<'_> {
+    let normal_style = Style::default().fg(Color::Rgb(137, 180, 250));
+
+    let selected_style = Style::default()
+        .fg(Color::Black)
+        .bg(Color::Rgb(137, 180, 250));
+
+    let items = match (app.in_system, app.in_search_mode) {
+        (false, false) => lists(app, normal_style, selected_style),
+        (false, true) => searched_lists(app, normal_style, selected_style),
+        _ => lists(app, normal_style, selected_style),
     };
 
     List::new(items).block(
@@ -35,10 +41,18 @@ fn lists_area(app: &App) -> List<'_> {
     )
 }
 
-fn items_in_list_area(app: &App) -> List<'_> {
-    let items = match (app.in_search_mode, app.in_system) {
-        (true, true) => searched_items_in_list(app),
-        _ => items_in_list(app),
+fn right_panel_items(app: &App) -> List<'_> {
+    let normal_style = Style::default().fg(Color::Rgb(148, 226, 213));
+
+    let is_fav_style = Style::default().fg(Color::Rgb(245, 194, 231));
+
+    let selected_style = Style::default()
+        .fg(Color::Black)
+        .bg(Color::Rgb(148, 226, 213));
+
+    let items = match (app.in_system, app.in_search_mode) {
+        (true, true) => searched_items_in_list(app, normal_style, is_fav_style, selected_style),
+        _ => items_in_list(app, normal_style, is_fav_style, selected_style),
     };
 
     List::new(items).block(
@@ -49,61 +63,38 @@ fn items_in_list_area(app: &App) -> List<'_> {
     )
 }
 
-fn searched_items_in_list(app: &App) -> Vec<ListItem<'_>> {
-    app.search_results
+fn lists(app: &App, normal_style: Style, selected_style: Style) -> Vec<ListItem<'_>> {
+    app.entries
         .iter()
+        .skip(app.scroll_offset)
         .enumerate()
-        .map(|(search_idx, &rom_idx)| {
-            let rom = &app.roms[rom_idx];
-            let is_fav = app.is_favorite(&app.current_system, &rom.title);
-
-            let style = if search_idx == app.search_selected {
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Rgb(180, 190, 254))
-            } else if is_fav {
-                Style::default().fg(Color::Rgb(203, 166, 247))
-            } else {
-                Style::default().fg(Color::Rgb(180, 190, 224))
-            };
-
-            let icon = if is_fav { "󰋑 " } else { "󰊖 " };
-
-            ListItem::new(Line::from(vec![
-                Span::styled(icon, style),
-                Span::styled(rom.title.clone(), style),
-            ]))
-        })
-        .collect()
-}
-
-fn searched_lists(app: &App) -> Vec<ListItem<'_>> {
-    app.search_results
-        .iter()
-        .enumerate()
-        .map(|(search_idx, &entry_idx)| {
-            let path = &app.entries[entry_idx];
-            let name = path
+        .map(|(i, p)| {
+            let actual_index = i + app.scroll_offset;
+            let name = p
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("<unknown>");
-            let style = if search_idx == app.search_selected {
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Rgb(180, 190, 254))
+
+            let style = if actual_index == app.selected && !app.in_system {
+                selected_style
             } else {
-                Style::default().fg(Color::Rgb(180, 190, 254))
+                normal_style
             };
 
             ListItem::new(Line::from(vec![
                 Span::styled(" ", style),
-                Span::styled(name.to_string(), style),
+                Span::styled(name, style),
             ]))
         })
         .collect()
 }
 
-fn items_in_list(app: &App) -> Vec<ListItem<'_>> {
+fn items_in_list(
+    app: &App,
+    normal_style: Style,
+    is_fav_style: Style,
+    selected_style: Style,
+) -> Vec<ListItem<'_>> {
     app.roms
         .iter()
         .skip(app.roms_scroll_offset)
@@ -112,24 +103,20 @@ fn items_in_list(app: &App) -> Vec<ListItem<'_>> {
             let actual_index = i + app.roms_scroll_offset;
             let is_fav = app.is_favorite(&app.current_system, &r.title);
 
-            let style = if actual_index == app.selected {
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Rgb(148, 226, 213))
+            let style = if actual_index == app.selected && app.in_system {
+                selected_style
             } else if is_fav {
-                Style::default().fg(Color::Rgb(245, 194, 231))
+                is_fav_style
             } else {
-                Style::default().fg(Color::Rgb(148, 226, 213))
+                normal_style
             };
 
             let icon = if is_fav { "󰋑 " } else { "󰊖 " };
 
-            let style_icon = if actual_index == app.selected {
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Rgb(148, 226, 213))
+            let style_icon = if actual_index == app.selected && app.in_system {
+                selected_style
             } else if is_fav {
-                Style::default().fg(Color::Rgb(245, 194, 231))
+                is_fav_style
             } else {
                 Style::default().fg(Color::Rgb(249, 226, 175))
             };
@@ -142,29 +129,64 @@ fn items_in_list(app: &App) -> Vec<ListItem<'_>> {
         .collect()
 }
 
-fn lists(app: &App) -> Vec<ListItem<'_>> {
-    app.entries
+fn searched_lists(app: &App, normal_style: Style, selected_style: Style) -> Vec<ListItem<'_>> {
+    app.search_results
         .iter()
-        .skip(app.scroll_offset)
         .enumerate()
-        .map(|(i, p)| {
-            let actual_index = i + app.scroll_offset;
-            let name = p
+        .map(|(search_idx, &entry_idx)| {
+            let path = &app.entries[entry_idx];
+            let name = path
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or("<unknown>");
-
-            let style = if actual_index == app.selected {
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Rgb(137, 180, 250))
+            let style = if search_idx == app.search_selected {
+                selected_style
             } else {
-                Style::default().fg(Color::Rgb(137, 180, 250))
+                normal_style
             };
 
             ListItem::new(Line::from(vec![
                 Span::styled(" ", style),
-                Span::styled(name, style),
+                Span::styled(name.to_string(), style),
+            ]))
+        })
+        .collect()
+}
+
+fn searched_items_in_list(
+    app: &App,
+    normal_style: Style,
+    is_fav_style: Style,
+    selected_style: Style,
+) -> Vec<ListItem<'_>> {
+    app.search_results
+        .iter()
+        .enumerate()
+        .map(|(search_idx, &rom_idx)| {
+            let rom = &app.roms[rom_idx];
+            let is_fav = app.is_favorite(&app.current_system, &rom.title);
+
+            let style = if search_idx == app.search_selected {
+                selected_style
+            } else if is_fav {
+                is_fav_style
+            } else {
+                normal_style
+            };
+
+            let icon = if is_fav { "󰋑 " } else { "󰊖 " };
+
+            let style_icon = if search_idx == app.search_selected && app.in_system {
+                selected_style
+            } else if is_fav {
+                is_fav_style
+            } else {
+                Style::default().fg(Color::Rgb(249, 226, 175))
+            };
+
+            ListItem::new(Line::from(vec![
+                Span::styled(icon, style_icon),
+                Span::styled(rom.title.clone(), style),
             ]))
         })
         .collect()
