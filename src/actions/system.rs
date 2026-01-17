@@ -107,6 +107,16 @@ impl App {
                 self.roms = Vec::new();
             }
         }
+
+        if self.favorites_mode {
+            self.roms_scroll_offset = 0;
+        } else {
+            self.roms_scroll_offset = self
+                .list_scroll_selections
+                .get(&self.current_list)
+                .copied()
+                .unwrap_or(0);
+        }
     }
 
     pub fn toggle_favorites_mode(&mut self) {

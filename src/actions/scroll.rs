@@ -7,7 +7,6 @@ impl App {
                 self.roms_scroll_offset = self.selected;
             } else if self.selected >= self.roms_scroll_offset + max_visible_items.saturating_sub(2)
             {
-                // Start scrolling 2 items before the end (ante-penultimate)
                 self.roms_scroll_offset = self
                     .selected
                     .saturating_sub(max_visible_items.saturating_sub(2) - 1);
@@ -16,7 +15,6 @@ impl App {
             if self.selected < self.scroll_offset {
                 self.scroll_offset = self.selected;
             } else if self.selected >= self.scroll_offset + max_visible_items.saturating_sub(2) {
-                // Start scrolling 2 items before the end (ante-penultimate)
                 self.scroll_offset = self
                     .selected
                     .saturating_sub(max_visible_items.saturating_sub(2) - 1);
@@ -27,7 +25,11 @@ impl App {
     pub fn update_scroll_for_height(&mut self, visible_height: usize) {
         let scroll_threshold_items = 5;
 
-        let near_end = self.roms.len().saturating_sub(scroll_threshold_items);
+        let near_end = if self.in_list {
+            self.roms.len().saturating_sub(scroll_threshold_items)
+        } else {
+            self.entries.len().saturating_sub(scroll_threshold_items)
+        };
 
         let threshold = if self.selected >= near_end {
             0

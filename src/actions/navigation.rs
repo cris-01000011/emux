@@ -83,7 +83,11 @@ impl App {
             self.in_list = false;
             self.selected_command = 0;
             self.in_command_selection = false;
-            self.roms_scroll_offset = 0;
+            self.roms_scroll_offset = self
+                .list_scroll_selections
+                .get(&self.current_list)
+                .copied()
+                .unwrap_or(0);
 
             let path_str = self.current_path.to_string_lossy().to_string();
             self.selected = self
