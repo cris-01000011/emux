@@ -2,7 +2,10 @@ use home;
 use serde::Deserialize;
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::actions::{favorite::FavoriteEntry, navigation::RomEntry, system::Command};
+use crate::actions::{
+    favorite::FavoriteEntry,
+    system::{Command, ListItem},
+};
 
 #[derive(Deserialize, Debug)]
 struct EmuxConfig {
@@ -27,7 +30,7 @@ pub struct App {
     pub scroll_offset: usize,
 
     pub in_list: bool,
-    pub roms: Vec<RomEntry>,
+    pub roms: Vec<ListItem>,
     pub current_list: String,
     pub lists_commands: Vec<ListCommand>,
     pub selected_command: usize,

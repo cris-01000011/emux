@@ -18,7 +18,7 @@ impl App {
 
     pub fn load_favorites(&mut self) {
         let favorites_path = Self::favorites_path();
-        if let Ok(data) = std::fs::read_to_string(&favorites_path) {
+        if let Ok(data) = std::fs::read_to_string(favorites_path) {
             if let Ok(favorites) = serde_json::from_str::<Vec<FavoriteEntry>>(&data) {
                 self.favorites = favorites;
             }
@@ -41,22 +41,19 @@ impl App {
             return;
         }
 
-        let selected_rom = &self.roms[self.selected];
+        let selected_item = &self.roms[self.selected];
         let favorite = FavoriteEntry {
             list: self.current_list.clone(),
-            title: selected_rom.title.clone(),
+            title: selected_item.title.clone(),
         };
 
-        // Check if already favorite
         if let Some(pos) = self
             .favorites
             .iter()
             .position(|f| f.list == favorite.list && f.title == favorite.title)
         {
-            // Remove from favorites
             self.favorites.remove(pos);
         } else {
-            // Add to favorites
             self.favorites.push(favorite);
         }
 
