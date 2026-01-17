@@ -2,7 +2,7 @@ use crate::app::App;
 
 impl App {
     fn update_scroll_offset(&mut self, max_visible_items: usize) {
-        if self.in_system {
+        if self.in_list {
             if self.selected < self.roms_scroll_offset {
                 self.roms_scroll_offset = self.selected;
             } else if self.selected >= self.roms_scroll_offset + max_visible_items.saturating_sub(2)

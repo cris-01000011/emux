@@ -30,12 +30,9 @@ impl App {
 
     fn update_search_results(&mut self) {
         if self.search_query.is_empty() {
-            // When search query is empty, show all items (no filtering)
-            if self.in_system {
-                // Show all ROMs
+            if self.in_list {
                 self.search_results = (0..self.roms.len()).collect();
             } else {
-                // Show all systems
                 self.search_results = (0..self.entries.len()).collect();
             }
             return;
@@ -43,8 +40,7 @@ impl App {
 
         let query_lower = self.search_query.to_lowercase();
 
-        if self.in_system {
-            // Search in ROMs
+        if self.in_list {
             self.search_results = self
                 .roms
                 .iter()
@@ -53,7 +49,6 @@ impl App {
                 .map(|(index, _)| index)
                 .collect();
         } else {
-            // Search in systems (entries)
             self.search_results = self
                 .entries
                 .iter()
@@ -69,7 +64,6 @@ impl App {
                 .collect();
         }
 
-        // Reset search selection
         self.search_selected = 0;
     }
 

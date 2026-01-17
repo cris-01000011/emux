@@ -3,7 +3,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout},
 };
 
-use crate::components::{header, main_list};
+use crate::components::{body, header};
 use crate::{app::App, components::footer};
 
 pub fn ui(frame: &mut Frame, app: &mut App) {
@@ -20,7 +20,7 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
     let visible_height = list_area.height as usize;
     app.update_scroll_for_height(visible_height);
 
-    main_list::render_main_list(frame, app, list_area);
+    body::render_body(frame, app, list_area);
     header::render_header(frame, app, vertical[0]);
     footer::render_footer(frame, app, vertical[2]);
 }

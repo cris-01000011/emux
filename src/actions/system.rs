@@ -9,31 +9,26 @@ pub struct Command {
 }
 
 impl App {
-    pub fn load_system_commands(&mut self) {
-        let commands_path = Self::emux_base_path().join("system_commands.json");
+    pub fn load_lists_commands(&mut self) {
+        let commands_path = Self::emux_base_path().join("lists_commands.json");
         let data = std::fs::read_to_string(&commands_path).unwrap_or_default();
-        self.system_commands = serde_json::from_str(&data).unwrap_or_default();
+        self.lists_commands = serde_json::from_str(&data).unwrap_or_default();
     }
 
-    fn clean_system_name(system: &str) -> String {
-        system
-            .split('(')
-            .next()
-            .unwrap_or(system)
-            .trim()
-            .to_string()
+    fn clean_list_name(list: &str) -> String {
+        list.split('(').next().unwrap_or(list).trim().to_string()
     }
 
     pub fn get_current_commands(&self) -> Vec<Command> {
-        if self.current_system.is_empty() {
+        if self.current_list.is_empty() {
             return Vec::new();
         }
 
-        let clean_system = Self::clean_system_name(&self.current_system);
+        let clean_list = Self::clean_list_name(&self.current_list);
 
-        self.system_commands
+        self.lists_commands
             .iter()
-            .find(|sc| sc.system == clean_system)
+            .find(|sc| sc.list == clean_list)
             .map(|sc| sc.commands.clone())
             .unwrap_or_default()
     }

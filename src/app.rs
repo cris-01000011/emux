@@ -15,8 +15,8 @@ struct PathsConfig {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-pub struct SystemCommand {
-    pub system: String,
+pub struct ListCommand {
+    pub list: String,
     pub commands: Vec<Command>,
 }
 
@@ -26,10 +26,10 @@ pub struct App {
     pub selected: usize,
     pub scroll_offset: usize,
 
-    pub in_system: bool,
+    pub in_list: bool,
     pub roms: Vec<RomEntry>,
-    pub current_system: String,
-    pub system_commands: Vec<SystemCommand>,
+    pub current_list: String,
+    pub lists_commands: Vec<ListCommand>,
     pub selected_command: usize,
     pub in_command_selection: bool,
     pub roms_scroll_offset: usize,
@@ -45,10 +45,10 @@ pub struct App {
 
     // Memory for last selections
     pub directory_selections: HashMap<String, usize>,
-    pub system_selections: HashMap<String, usize>,
+    pub list_selections: HashMap<String, usize>,
     pub command_selections: HashMap<String, usize>,
     pub directory_scroll_selections: HashMap<String, usize>,
-    pub system_scroll_selections: HashMap<String, usize>,
+    pub list_scroll_selections: HashMap<String, usize>,
 }
 
 impl App {
@@ -70,12 +70,12 @@ impl App {
         }
     }
 
-    pub fn games_path() -> PathBuf {
-        Self::emux_base_path().join("games")
+    pub fn lists_path() -> PathBuf {
+        Self::emux_base_path().join("lists")
     }
 
     pub fn new() -> Self {
-        let start = Self::games_path();
+        let start = Self::lists_path();
 
         let mut app = App {
             current_path: start.clone(),
@@ -83,10 +83,10 @@ impl App {
             selected: 0,
             scroll_offset: 0,
 
-            in_system: false,
+            in_list: false,
             roms: Vec::new(),
-            current_system: String::new(),
-            system_commands: Vec::new(),
+            current_list: String::new(),
+            lists_commands: Vec::new(),
             selected_command: 0,
             in_command_selection: false,
             roms_scroll_offset: 0,
@@ -99,14 +99,14 @@ impl App {
             favorites: Vec::new(),
 
             directory_selections: HashMap::new(),
-            system_selections: HashMap::new(),
+            list_selections: HashMap::new(),
             command_selections: HashMap::new(),
             directory_scroll_selections: HashMap::new(),
-            system_scroll_selections: HashMap::new(),
+            list_scroll_selections: HashMap::new(),
         };
 
         app.load_dir(start);
-        app.load_system_commands();
+        app.load_lists_commands();
         app.load_favorites();
         app.load_list();
 
@@ -115,7 +115,7 @@ impl App {
 
     pub fn load_dir(&mut self, dir: PathBuf) {
         // Save current selection and scroll before loading new directory
-        if !self.in_system {
+        if !self.in_list {
             let path_str = self.current_path.to_string_lossy().to_string();
             self.directory_selections
                 .insert(path_str.clone(), self.selected);
@@ -146,8 +146,8 @@ impl App {
             .copied()
             .unwrap_or(0);
 
-        self.in_system = false;
-        self.current_system.clear();
+        self.in_list = false;
+        self.current_list.clear();
         self.selected_command = 0;
         self.in_command_selection = false;
         self.scroll_offset = 0;

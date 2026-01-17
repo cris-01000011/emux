@@ -7,17 +7,28 @@ use ratatui::{
 
 use crate::app::App;
 
-pub fn render_main_list(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
+pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let horizontal = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
+        .constraints([
+            Constraint::Percentage(15),
+            Constraint::Percentage(65),
+            Constraint::Percentage(20),
+        ])
         .split(area);
 
     let left_panel = left_panel_items(app);
     frame.render_widget(left_panel, horizontal[0]);
 
-    let right_panel = right_panel_items(app);
-    frame.render_widget(right_panel, horizontal[1]);
+    let center_panel = center_panel_items(app);
+    frame.render_widget(center_panel, horizontal[1]);
+
+    let right_panel = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Color::Rgb(137, 180, 250));
+
+    frame.render_widget(right_panel, horizontal[2]);
 }
 
 fn left_panel_items(app: &App) -> List<'_> {
@@ -27,7 +38,7 @@ fn left_panel_items(app: &App) -> List<'_> {
         .fg(Color::Black)
         .bg(Color::Rgb(137, 180, 250));
 
-    let items = match (app.in_system, app.in_search_mode) {
+    let items = match (app.in_list, app.in_search_mode) {
         (false, false) => lists(app, normal_style, selected_style),
         (false, true) => searched_lists(app, normal_style, selected_style),
         _ => lists(app, normal_style, selected_style),
@@ -41,7 +52,7 @@ fn left_panel_items(app: &App) -> List<'_> {
     )
 }
 
-fn right_panel_items(app: &App) -> List<'_> {
+fn center_panel_items(app: &App) -> List<'_> {
     let normal_style = Style::default().fg(Color::Rgb(148, 226, 213));
 
     let is_fav_style = Style::default().fg(Color::Rgb(245, 194, 231));
@@ -50,7 +61,7 @@ fn right_panel_items(app: &App) -> List<'_> {
         .fg(Color::Black)
         .bg(Color::Rgb(148, 226, 213));
 
-    let items = match (app.in_system, app.in_search_mode) {
+    let items = match (app.in_list, app.in_search_mode) {
         (true, true) => searched_items_in_list(app, normal_style, is_fav_style, selected_style),
         _ => items_in_list(app, normal_style, is_fav_style, selected_style),
     };
@@ -75,7 +86,7 @@ fn lists(app: &App, normal_style: Style, selected_style: Style) -> Vec<ListItem<
                 .and_then(|s| s.to_str())
                 .unwrap_or("<unknown>");
 
-            let style = if actual_index == app.selected && !app.in_system {
+            let style = if actual_index == app.selected && !app.in_list {
                 selected_style
             } else {
                 normal_style
@@ -101,9 +112,9 @@ fn items_in_list(
         .enumerate()
         .map(|(i, r)| {
             let actual_index = i + app.roms_scroll_offset;
-            let is_fav = app.is_favorite(&app.current_system, &r.title);
+            let is_fav = app.is_favorite(&app.current_list, &r.title);
 
-            let style = if actual_index == app.selected && app.in_system {
+            let style = if actual_index == app.selected && app.in_list {
                 selected_style
             } else if is_fav {
                 is_fav_style
@@ -111,9 +122,9 @@ fn items_in_list(
                 normal_style
             };
 
-            let icon = if is_fav { "󰋑 " } else { "󰊖 " };
+            let icon = if is_fav { "󰋑 " } else { " " };
 
-            let style_icon = if actual_index == app.selected && app.in_system {
+            let style_icon = if actual_index == app.selected && app.in_list {
                 selected_style
             } else if is_fav {
                 is_fav_style
@@ -164,7 +175,7 @@ fn searched_items_in_list(
         .enumerate()
         .map(|(search_idx, &rom_idx)| {
             let rom = &app.roms[rom_idx];
-            let is_fav = app.is_favorite(&app.current_system, &rom.title);
+            let is_fav = app.is_favorite(&app.current_list, &rom.title);
 
             let style = if search_idx == app.search_selected {
                 selected_style
@@ -174,9 +185,9 @@ fn searched_items_in_list(
                 normal_style
             };
 
-            let icon = if is_fav { "󰋑 " } else { "󰊖 " };
+            let icon = if is_fav { "󰋑 " } else { " " };
 
-            let style_icon = if search_idx == app.search_selected && app.in_system {
+            let style_icon = if search_idx == app.search_selected && app.in_list {
                 selected_style
             } else if is_fav {
                 is_fav_style

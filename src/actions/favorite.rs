@@ -5,13 +5,15 @@ use crate::app::App;
 
 #[derive(Deserialize, Debug, Clone, serde::Serialize)]
 pub struct FavoriteEntry {
-    pub system: String,
+    pub list: String,
     pub title: String,
 }
 
 impl App {
     fn favorites_path() -> PathBuf {
-        Self::emux_base_path().join("lists").join("favorites.json")
+        Self::emux_base_path()
+            .join("system-lists")
+            .join("favorites.json")
     }
 
     pub fn load_favorites(&mut self) {
@@ -35,13 +37,13 @@ impl App {
     }
 
     pub fn toggle_favorite(&mut self) {
-        if !self.in_system || self.roms.is_empty() {
+        if !self.in_list || self.roms.is_empty() {
             return;
         }
 
         let selected_rom = &self.roms[self.selected];
         let favorite = FavoriteEntry {
-            system: self.current_system.clone(),
+            list: self.current_list.clone(),
             title: selected_rom.title.clone(),
         };
 
@@ -49,7 +51,7 @@ impl App {
         if let Some(pos) = self
             .favorites
             .iter()
-            .position(|f| f.system == favorite.system && f.title == favorite.title)
+            .position(|f| f.list == favorite.list && f.title == favorite.title)
         {
             // Remove from favorites
             self.favorites.remove(pos);
@@ -61,9 +63,9 @@ impl App {
         self.save_favorites();
     }
 
-    pub fn is_favorite(&self, system: &str, title: &str) -> bool {
+    pub fn is_favorite(&self, list: &str, title: &str) -> bool {
         self.favorites
             .iter()
-            .any(|f| f.system == system && f.title == title)
+            .any(|f| f.list == list && f.title == title)
     }
 }

@@ -15,7 +15,7 @@ impl App {
         if self.selected > 0 {
             self.selected -= 1;
         } else {
-            self.selected = if self.in_system {
+            self.selected = if self.in_list {
                 self.roms.len().saturating_sub(1)
             } else {
                 self.entries.len().saturating_sub(1)
@@ -26,7 +26,7 @@ impl App {
     }
 
     pub fn move_down(&mut self) {
-        if self.in_system {
+        if self.in_list {
             if self.selected + 1 < self.roms.len() {
                 self.selected += 1;
             } else {
@@ -46,7 +46,7 @@ impl App {
     }
 
     pub fn go_to_last_item(&mut self) {
-        if self.in_system {
+        if self.in_list {
             if !self.roms.is_empty() {
                 self.selected = self.roms.len().saturating_sub(1);
             }
@@ -58,7 +58,7 @@ impl App {
     }
 
     pub fn jump_to_random(&mut self) {
-        if self.in_system {
+        if self.in_list {
             if !self.roms.is_empty() {
                 self.selected = rand::thread_rng().gen_range(0..self.roms.len());
             }
@@ -70,7 +70,7 @@ impl App {
     }
 
     pub fn open_folder(&mut self) {
-        if self.in_system {
+        if self.in_list {
             return;
         }
 
@@ -83,7 +83,7 @@ impl App {
     }
 
     pub fn open_file_folder(&mut self) {
-        if !self.in_system {
+        if !self.in_list {
             return self.open_folder();
         }
 
@@ -93,23 +93,20 @@ impl App {
     }
 
     pub fn go_back(&mut self) {
-        if self.in_system {
-            // Save current selections and scroll before leaving system
-            self.system_selections
-                .insert(self.current_system.clone(), self.selected);
+        if self.in_list {
+            self.list_selections
+                .insert(self.current_list.clone(), self.selected);
             self.command_selections
-                .insert(self.current_system.clone(), self.selected_command);
-            self.system_scroll_selections
-                .insert(self.current_system.clone(), self.roms_scroll_offset);
+                .insert(self.current_list.clone(), self.selected_command);
+            self.list_scroll_selections
+                .insert(self.current_list.clone(), self.roms_scroll_offset);
 
-            // return to system list
-            self.in_system = false;
-            self.current_system.clear();
+            self.in_list = false;
+            self.current_list.clear();
             self.selected_command = 0;
             self.in_command_selection = false;
             self.roms_scroll_offset = 0;
 
-            // Restore directory selection for this path
             let path_str = self.current_path.to_string_lossy().to_string();
             self.selected = self
                 .directory_selections
@@ -120,7 +117,7 @@ impl App {
             return;
         }
 
-        if self.current_path == Self::games_path() {
+        if self.current_path == Self::lists_path() {
             return;
         }
     }
@@ -128,38 +125,35 @@ impl App {
     fn enter_to_list(&mut self, path: PathBuf) {
         self.load_list();
 
-        // Extract system name from filename (handle quotes properly)
-        self.current_system = path
+        self.current_list = path
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
             .to_string();
 
-        self.in_system = true;
+        self.in_list = true;
 
-        // Restore saved selections for this system
         self.selected = self
-            .system_selections
-            .get(&self.current_system)
+            .list_selections
+            .get(&self.current_list)
             .copied()
             .unwrap_or(0);
         self.selected_command = self
             .command_selections
-            .get(&self.current_system)
+            .get(&self.current_list)
             .copied()
             .unwrap_or(0);
-        self.in_command_selection = true; // Auto-select first command
+        self.in_command_selection = true;
 
-        // Restore saved ROM scroll offset for this system, default to 0 if not found
         self.roms_scroll_offset = self
-            .system_scroll_selections
-            .get(&self.current_system)
+            .list_scroll_selections
+            .get(&self.current_list)
             .copied()
             .unwrap_or(0);
     }
 
     pub fn load_list(&mut self) {
-        let path = match (!self.in_system, self.entries.get(self.selected).cloned()) {
+        let path = match (!self.in_list, self.entries.get(self.selected).cloned()) {
             (true, Some(p)) if p.extension().and_then(|s| s.to_str()) == Some("json") => Some(p),
             _ => None,
         };

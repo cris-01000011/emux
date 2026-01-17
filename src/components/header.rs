@@ -54,7 +54,7 @@ fn generate_tabs(
 ) -> Line<'static> {
     let mut spans: Vec<Span> = Vec::new();
 
-    if !app.in_system {
+    if !app.in_list {
         spans.push(Span::styled(" Systems ", normal_style));
         spans.push(Span::raw(" "));
         spans.push(Span::styled(" Favorites ", normal_style));
@@ -62,13 +62,13 @@ fn generate_tabs(
     }
 
     for (i, cmd) in commands.iter().enumerate() {
-        let style = if app.in_system && i == app.selected_command {
+        let style = if app.in_list && i == app.selected_command {
             selected_style
         } else {
             normal_style
         };
 
-        let text = if app.in_system && i == app.selected_command {
+        let text = if app.in_list && i == app.selected_command {
             format!(" {} ", cmd.name)
         } else {
             format!("  {}  ", i + 1)
