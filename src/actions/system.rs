@@ -91,6 +91,14 @@ impl App {
             .unwrap_or("unknown")
             .to_string();
 
+        let restored = self
+            .list_selections
+            .get(&self.current_list)
+            .copied()
+            .unwrap_or(0);
+
+        self.items_list_state.select(Some(restored));
+
         let path_str = self.current_path.to_string_lossy().to_string();
         if let Some(selected) = self.directory_list_state.selected() {
             self.directory_selections.insert(path_str.clone(), selected);

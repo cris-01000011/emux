@@ -24,10 +24,18 @@ impl App {
 
     pub fn go_to_first_item(&mut self) {
         self.current_state().select_first();
+        self.load_list();
     }
 
     pub fn go_to_last_item(&mut self) {
-        self.current_state().select_last();
+        if self.in_list {
+            self.items_list_state.select(Some(self.roms.len() - 1));
+        } else {
+            self.directory_list_state
+                .select(Some(self.entries.len() - 1));
+        }
+
+        self.load_list();
     }
 
     pub fn jump_to_random(&mut self) {

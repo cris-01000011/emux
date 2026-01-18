@@ -40,7 +40,7 @@ fn render_center_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     match (app.in_list, app.in_search_mode) {
         (true, true) => render_items_search(frame, app, area, &styles, &panel_block),
         (true, false) => render_items_list(frame, app, area, &styles, &panel_block),
-        (false, _) => render_empty_panel(frame, area, &panel_block),
+        (false, _) => render_items_list(frame, app, area, &styles, &panel_block),
     }
 }
 
@@ -49,7 +49,6 @@ fn render_right_panel(frame: &mut ratatui::Frame, _app: &App, area: Rect) {
     frame.render_widget(panel_block, area);
 }
 
-// Styles
 struct LeftPanelStyles {
     normal: Style,
     selected: Style,
@@ -90,7 +89,6 @@ impl CenterPanelStyles {
     }
 }
 
-// Panel utilities
 fn create_panel_block() -> Block<'static> {
     Block::default()
         .borders(Borders::ALL)
@@ -98,7 +96,6 @@ fn create_panel_block() -> Block<'static> {
         .border_style(Color::Rgb(137, 180, 250))
 }
 
-// Directory list rendering
 fn render_directory_list(
     frame: &mut ratatui::Frame,
     app: &mut App,
@@ -167,7 +164,6 @@ fn render_directory_search(
     frame.render_widget(list, area);
 }
 
-// Items list rendering
 fn render_items_list(
     frame: &mut ratatui::Frame,
     app: &mut App,
@@ -182,8 +178,9 @@ fn render_items_list(
         .roms
         .iter()
         .enumerate()
-        .map(|(index, item)| {
+        .map(|(_, item)| {
             let is_favorite = app.is_favorite(&app.current_list, &item.item);
+            let in_list = app.in_list;
 
             let (icon, icon_style) = if is_favorite {
                 ("󰋑 ", styles.favorite)
@@ -191,30 +188,26 @@ fn render_items_list(
                 (" ", styles.icon)
             };
 
-            let (text_style, selected_style) = if is_favorite {
-                (styles.favorite, styles.favorite_selected)
-            } else {
-                (styles.normal, styles.selected)
-            };
+            let text_style = match (in_list, is_favorite) {
+                (true, false) => styles.normal,
 
-            let item_style = if Some(index) == app.items_list_state.selected() {
-                selected_style
-            } else {
-                text_style
+                (_, true) => styles.favorite,
+
+                _ => styles.normal,
             };
 
             ListItem::new(Line::from(vec![
                 Span::styled(icon, icon_style),
-                Span::styled(item.item.clone(), item_style),
+                Span::styled(item.item.clone(), text_style),
             ]))
         })
         .collect();
 
-    let list = List::new(items)
-        .block(block.clone())
-        .highlight_symbol("")
-        .highlight_style(styles.selected)
-        .highlight_spacing(HighlightSpacing::Always);
+    let mut list = List::new(items).block(block.clone());
+
+    if app.in_list {
+        list = list.highlight_style(styles.selected);
+    }
 
     frame.render_stateful_widget(list, area, &mut app.items_list_state);
 }
@@ -268,16 +261,6 @@ fn render_items_search(
     frame.render_widget(list, area);
 }
 
-fn render_empty_panel(frame: &mut ratatui::Frame, area: Rect, block: &Block<'static>) {
-    let list = List::new(Vec::<ListItem>::new())
-        .block(block.clone())
-        .highlight_symbol("")
-        .highlight_spacing(HighlightSpacing::Always);
-
-    frame.render_widget(list, area);
-}
-
-// Utility functions
 fn extract_display_name(path: &std::path::Path) -> String {
     path.file_stem()
         .and_then(|s| s.to_str())
