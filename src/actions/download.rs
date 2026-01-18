@@ -8,14 +8,14 @@ impl App {
             return Ok(());
         }
 
-        let selected_rom = &self.roms[self.selected];
+        let selected_rom = &self.roms[self.items_list_state.selected().unwrap_or(0)];
 
         let download_dir = Self::emux_base_path()
             .join("downloads")
             .join(&self.current_list);
         fs::create_dir_all(&download_dir)?;
 
-        let clean_title = Self::sanitize_filename(&selected_rom.title);
+        let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
 
         if rom_path.exists() {
@@ -40,7 +40,7 @@ impl App {
             return Ok(());
         }
 
-        let selected_rom = &self.roms[self.selected];
+        let selected_rom = &self.roms[self.items_list_state.selected().unwrap_or(0)];
         let commands = self.get_current_commands();
 
         if commands.is_empty() {
@@ -52,7 +52,7 @@ impl App {
         // Get paths for variable substitution
         let emux_path = Self::emux_base_path();
         let download_dir = emux_path.join("downloads").join(&self.current_list);
-        let clean_title = Self::sanitize_filename(&selected_rom.title);
+        let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
         let game_downloaded = rom_path.to_string_lossy();
 

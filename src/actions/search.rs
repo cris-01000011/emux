@@ -11,7 +11,11 @@ impl App {
 
     pub fn stop_search(&mut self) {
         if let Some(original_index) = self.get_current_search_index() {
-            self.selected = original_index;
+            if self.in_list {
+                self.items_list_state.select(Some(original_index));
+            } else {
+                self.directory_list_state.select(Some(original_index));
+            }
         }
         self.in_search_mode = false;
         self.search_query.clear();
@@ -45,7 +49,7 @@ impl App {
                 .roms
                 .iter()
                 .enumerate()
-                .filter(|(_, rom)| rom.title.to_lowercase().contains(&query_lower))
+                .filter(|(_, rom)| rom.item.to_lowercase().contains(&query_lower))
                 .map(|(index, _)| index)
                 .collect();
         } else {

@@ -29,9 +29,9 @@ impl App {
             return;
         }
 
-        let selected_rom = &self.roms[self.selected];
+        let selected_rom = &self.roms[self.items_list_state.selected().unwrap_or(0)];
 
-        let clean_title = Self::normalize_game_title(&selected_rom.title);
+        let clean_title = Self::normalize_game_title(&selected_rom.item);
         let clean_list = Self::normalize_game_title(&self.current_list);
 
         let search_query = format!("{} {}", clean_title, clean_list);

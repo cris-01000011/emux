@@ -6,7 +6,7 @@ use crate::app::App;
 #[derive(Deserialize, Debug, Clone, serde::Serialize)]
 pub struct FavoriteEntry {
     pub list: String,
-    pub title: String,
+    pub item: String,
     pub url: String,
 }
 
@@ -42,17 +42,17 @@ impl App {
             return;
         }
 
-        let selected_item = &self.roms[self.selected];
+        let selected_item = &self.roms[self.items_list_state.selected().unwrap_or(0)];
         let favorite = FavoriteEntry {
             list: self.current_list.clone(),
-            title: selected_item.title.clone(),
+            item: selected_item.item.clone(),
             url: selected_item.url.clone(),
         };
 
         if let Some(pos) = self
             .favorites
             .iter()
-            .position(|f| f.list == favorite.list && f.title == favorite.title)
+            .position(|f| f.list == favorite.list && f.item == favorite.item)
         {
             self.favorites.remove(pos);
         } else {
@@ -65,6 +65,6 @@ impl App {
     pub fn is_favorite(&self, list: &str, title: &str) -> bool {
         self.favorites
             .iter()
-            .any(|f| f.list == list && f.title == title)
+            .any(|f| f.list == list && f.item == title)
     }
 }

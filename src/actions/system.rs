@@ -10,7 +10,7 @@ pub struct Command {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ListItem {
-    pub title: String,
+    pub item: String,
     pub url: String,
 }
 
@@ -46,15 +46,15 @@ impl App {
             self.roms.retain(|item| {
                 favorites
                     .iter()
-                    .any(|f| f.list == current_list && f.title == item.title)
+                    .any(|f| f.list == current_list && f.item == item.item)
             });
 
-            if !self.roms.is_empty() && self.selected >= self.roms.len() {
-                self.selected = self.roms.len() - 1;
-            }
-
-            if self.roms_scroll_offset > 0 && self.selected < self.roms_scroll_offset {
-                self.roms_scroll_offset = self.selected;
+            // Adjust items selection if needed
+            if let Some(selected) = self.items_list_state.selected() {
+                if selected >= self.roms.len() && !self.roms.is_empty() {
+                    self.items_list_state
+                        .select(Some(self.roms.len().saturating_sub(1)));
+                }
             }
 
             return;
@@ -76,7 +76,11 @@ impl App {
             return;
         }
 
-        let path = match self.entries.get(self.selected).cloned() {
+        let path = match self
+            .entries
+            .get(self.directory_list_state.selected().unwrap_or(0))
+            .cloned()
+        {
             Some(p) if p.extension().and_then(|s| s.to_str()) == Some("json") => p,
             _ => return,
         };
@@ -88,17 +92,16 @@ impl App {
             .to_string();
 
         let path_str = self.current_path.to_string_lossy().to_string();
-        self.directory_selections
-            .insert(path_str.clone(), self.selected);
-        self.directory_scroll_selections
-            .insert(path_str, self.scroll_offset);
+        if let Some(selected) = self.directory_list_state.selected() {
+            self.directory_selections.insert(path_str.clone(), selected);
+        }
 
         let data = std::fs::read_to_string(&path).unwrap_or_default();
 
         match serde_json::from_str::<Vec<ListItem>>(&data) {
             Ok(mut roms) => {
                 if self.favorites_mode {
-                    roms.retain(|item| self.is_favorite(&self.current_list, &item.title));
+                    roms.retain(|item| self.is_favorite(&self.current_list, &item.item));
                 }
                 self.roms = roms;
             }
@@ -106,16 +109,6 @@ impl App {
                 eprintln!("Error parsing JSON for {}: {}", path.display(), e);
                 self.roms = Vec::new();
             }
-        }
-
-        if self.favorites_mode {
-            self.roms_scroll_offset = 0;
-        } else {
-            self.roms_scroll_offset = self
-                .list_scroll_selections
-                .get(&self.current_list)
-                .copied()
-                .unwrap_or(0);
         }
     }
 
