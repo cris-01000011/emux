@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph, Tabs},
 };
 
 use crate::{actions::system::Command, app::App};
@@ -10,13 +10,11 @@ use crate::{actions::system::Command, app::App};
 pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
     let commands = app.get_current_commands();
 
-    let normal_style = Style::default()
-        .bg(Color::Rgb(180, 190, 254))
+    let selected_style = Style::default()
+        .bg(Color::Rgb(203, 166, 247))
         .fg(Color::Black);
 
-    let selected_style = Style::default().bg(Color::LightBlue).fg(Color::Black);
-
-    let line = generate_tabs(app, commands, normal_style, selected_style);
+    let line = generate_tabs(app, commands);
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -29,7 +27,7 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
         .border_style(Style::default().fg(Color::Rgb(137, 180, 250)))
         .title("Search");
 
-    let search_text = format!("{}", app.search_query);
+    let search_text = app.search_query.clone();
     let search_paragraph = Paragraph::new(search_text)
         .style(Color::Rgb(180, 190, 254))
         .block(search_block);
@@ -39,34 +37,28 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
     let tabs_block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::LightBlue));
+        .border_style(Color::Rgb(203, 166, 247));
 
-    let paragraph = Paragraph::new(line).block(tabs_block);
+    let tabs = Tabs::new(line)
+        .block(tabs_block)
+        .select(app.selected_command)
+        .highlight_style(selected_style)
+        .divider("");
 
-    frame.render_widget(paragraph, chunks[1]);
+    frame.render_widget(tabs, chunks[1]);
 }
 
-fn generate_tabs(
-    app: &App,
-    commands: Vec<Command>,
-    normal_style: Style,
-    selected_style: Style,
-) -> Line<'static> {
-    let mut spans: Vec<Span> = Vec::new();
-
+fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {
     if !app.in_list {
-        spans.push(Span::styled(" Systems ", normal_style));
-        spans.push(Span::raw(" "));
-        spans.push(Span::styled(" Favorites ", normal_style));
-        return Line::from(spans);
+        return Line::default();
     }
 
+    let mut spans: Vec<Span> = Vec::new();
+
     for (i, cmd) in commands.iter().enumerate() {
-        let style = if app.in_list && i == app.selected_command {
-            selected_style
-        } else {
-            normal_style
-        };
+        let style = Style::default()
+            .bg(Color::Rgb(180, 190, 254))
+            .fg(Color::Black);
 
         let text = if app.in_list && i == app.selected_command {
             format!(" {} ", cmd.name)
@@ -75,10 +67,6 @@ fn generate_tabs(
         };
 
         spans.push(Span::styled(text, style));
-
-        if i + 1 < commands.len() {
-            spans.push(Span::raw(" "));
-        }
     }
 
     Line::from(spans)
