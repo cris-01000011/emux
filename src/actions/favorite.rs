@@ -42,29 +42,31 @@ impl App {
             return;
         }
 
-        let selected_item = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
-        let favorite = FavoriteEntry {
+        let selected_item_index = self.items_in_list_state.selected().unwrap_or(0);
+        let selected_item = &self.items_in_list[selected_item_index];
+
+        let new_favorite = FavoriteEntry {
             list: self.current_list.clone(),
             item: selected_item.item.clone(),
             url: selected_item.url.clone(),
         };
 
-        if let Some(pos) = self
+        if let Some(already_favorite) = self
             .favorites
             .iter()
-            .position(|f| f.list == favorite.list && f.item == favorite.item)
+            .position(|f| f.list == new_favorite.list && f.item == new_favorite.item)
         {
-            self.favorites.remove(pos);
+            self.favorites.remove(already_favorite);
         } else {
-            self.favorites.push(favorite);
+            self.favorites.push(new_favorite);
         }
 
         self.save_favorites();
     }
 
-    pub fn is_favorite(&self, list: &str, title: &str) -> bool {
+    pub fn is_favorite(&self, list: &str, item: &str) -> bool {
         self.favorites
             .iter()
-            .any(|f| f.list == list && f.item == title)
+            .any(|f| f.list == list && f.item == item)
     }
 }
