@@ -74,7 +74,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Down => app.move_down(),
                     KeyCode::Right => app.open_list(),
                     KeyCode::Left => app.go_back(),
-                    KeyCode::Enter => app.open_file_folder(),
+                    KeyCode::Enter => app.open_file(),
                     KeyCode::Backspace => app.go_back(),
                     KeyCode::Tab => app.next_command(),
                     KeyCode::BackTab => app.prev_command(),

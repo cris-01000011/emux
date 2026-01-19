@@ -12,9 +12,9 @@ impl App {
     pub fn stop_search(&mut self) {
         if let Some(original_index) = self.get_current_search_index() {
             if self.in_list {
-                self.items_list_state.select(Some(original_index));
+                self.items_in_list_state.select(Some(original_index));
             } else {
-                self.directory_list_state.select(Some(original_index));
+                self.lists_state.select(Some(original_index));
             }
         }
         self.in_search_mode = false;
@@ -35,9 +35,9 @@ impl App {
     fn update_search_results(&mut self) {
         if self.search_query.is_empty() {
             if self.in_list {
-                self.search_results = (0..self.roms.len()).collect();
+                self.search_results = (0..self.items_in_list.len()).collect();
             } else {
-                self.search_results = (0..self.entries.len()).collect();
+                self.search_results = (0..self.lists.len()).collect();
             }
             return;
         }
@@ -46,7 +46,7 @@ impl App {
 
         if self.in_list {
             self.search_results = self
-                .roms
+                .items_in_list
                 .iter()
                 .enumerate()
                 .filter(|(_, rom)| rom.item.to_lowercase().contains(&query_lower))
@@ -54,7 +54,7 @@ impl App {
                 .collect();
         } else {
             self.search_results = self
-                .entries
+                .lists
                 .iter()
                 .enumerate()
                 .filter(|(_, path)| {

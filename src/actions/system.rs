@@ -43,17 +43,17 @@ impl App {
         if self.in_list && self.favorites_mode {
             let current_list = self.current_list.clone();
             let favorites = self.favorites.clone();
-            self.roms.retain(|item| {
+            self.items_in_list.retain(|item| {
                 favorites
                     .iter()
                     .any(|f| f.list == current_list && f.item == item.item)
             });
 
             // Adjust items selection if needed
-            if let Some(selected) = self.items_list_state.selected() {
-                if selected >= self.roms.len() && !self.roms.is_empty() {
-                    self.items_list_state
-                        .select(Some(self.roms.len().saturating_sub(1)));
+            if let Some(selected) = self.items_in_list_state.selected() {
+                if selected >= self.items_in_list.len() && !self.items_in_list.is_empty() {
+                    self.items_in_list_state
+                        .select(Some(self.items_in_list.len().saturating_sub(1)));
                 }
             }
 
@@ -66,19 +66,19 @@ impl App {
 
             match serde_json::from_str::<Vec<ListItem>>(&data) {
                 Ok(roms) => {
-                    self.roms = roms;
+                    self.items_in_list = roms;
                 }
                 Err(e) => {
                     eprintln!("Error parsing JSON for {}: {}", path.display(), e);
-                    self.roms = Vec::new();
+                    self.items_in_list = Vec::new();
                 }
             }
             return;
         }
 
         let path = match self
-            .entries
-            .get(self.directory_list_state.selected().unwrap_or(0))
+            .lists
+            .get(self.lists_state.selected().unwrap_or(0))
             .cloned()
         {
             Some(p) if p.extension().and_then(|s| s.to_str()) == Some("json") => p,
@@ -97,10 +97,10 @@ impl App {
             .copied()
             .unwrap_or(0);
 
-        self.items_list_state.select(Some(restored));
+        self.items_in_list_state.select(Some(restored));
 
         let path_str = self.current_path.to_string_lossy().to_string();
-        if let Some(selected) = self.directory_list_state.selected() {
+        if let Some(selected) = self.lists_state.selected() {
             self.directory_selections.insert(path_str.clone(), selected);
         }
 
@@ -111,11 +111,11 @@ impl App {
                 if self.favorites_mode {
                     roms.retain(|item| self.is_favorite(&self.current_list, &item.item));
                 }
-                self.roms = roms;
+                self.items_in_list = roms;
             }
             Err(e) => {
                 eprintln!("Error parsing JSON for {}: {}", path.display(), e);
-                self.roms = Vec::new();
+                self.items_in_list = Vec::new();
             }
         }
     }

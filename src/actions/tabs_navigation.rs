@@ -2,10 +2,6 @@ use crate::app::App;
 
 impl App {
     pub fn next_command(&mut self) {
-        if !self.in_command_selection {
-            return;
-        }
-
         let commands = self.get_current_commands();
         if !commands.is_empty() {
             self.selected_command = (self.selected_command + 1) % commands.len();
@@ -13,10 +9,6 @@ impl App {
     }
 
     pub fn prev_command(&mut self) {
-        if !self.in_command_selection {
-            return;
-        }
-
         let commands = self.get_current_commands();
         if !commands.is_empty() {
             self.selected_command = if self.selected_command == 0 {

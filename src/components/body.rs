@@ -103,11 +103,8 @@ fn render_directory_list(
     styles: &LeftPanelStyles,
     block: &Block<'static>,
 ) {
-    let visible_height = area.height.saturating_sub(2) as usize;
-    app.ensure_selection_visible_directory(visible_height);
-
     let items: Vec<ListItem> = app
-        .entries
+        .lists
         .iter()
         .enumerate()
         .map(|(_index, path)| {
@@ -125,7 +122,7 @@ fn render_directory_list(
         .highlight_style(styles.selected)
         .highlight_spacing(HighlightSpacing::Always);
 
-    frame.render_stateful_widget(list, area, &mut app.directory_list_state);
+    frame.render_stateful_widget(list, area, &mut app.lists_state);
 }
 
 fn render_directory_search(
@@ -140,7 +137,7 @@ fn render_directory_search(
         .iter()
         .enumerate()
         .map(|(search_idx, &entry_idx)| {
-            let path = &app.entries[entry_idx];
+            let path = &app.lists[entry_idx];
             let name = extract_display_name(path);
             let style = if search_idx == app.search_selected {
                 styles.selected
@@ -171,11 +168,8 @@ fn render_items_list(
     styles: &CenterPanelStyles,
     block: &Block<'static>,
 ) {
-    let visible_height = area.height.saturating_sub(2) as usize;
-    app.ensure_selection_visible_items(visible_height);
-
     let items: Vec<ListItem> = app
-        .roms
+        .items_in_list
         .iter()
         .enumerate()
         .map(|(_, item)| {
@@ -209,7 +203,7 @@ fn render_items_list(
         list = list.highlight_style(styles.selected);
     }
 
-    frame.render_stateful_widget(list, area, &mut app.items_list_state);
+    frame.render_stateful_widget(list, area, &mut app.items_in_list_state);
 }
 
 fn render_items_search(
@@ -224,7 +218,7 @@ fn render_items_search(
         .iter()
         .enumerate()
         .map(|(search_idx, &rom_idx)| {
-            let rom = &app.roms[rom_idx];
+            let rom = &app.items_in_list[rom_idx];
             let is_favorite = app.is_favorite(&app.current_list, &rom.item);
 
             let (icon, icon_style) = if is_favorite {

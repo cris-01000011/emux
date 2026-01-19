@@ -38,11 +38,11 @@ impl App {
     }
 
     pub fn toggle_favorite(&mut self) {
-        if !self.in_list || self.roms.is_empty() {
+        if !self.in_list || self.items_in_list.is_empty() {
             return;
         }
 
-        let selected_item = &self.roms[self.items_list_state.selected().unwrap_or(0)];
+        let selected_item = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
         let favorite = FavoriteEntry {
             list: self.current_list.clone(),
             item: selected_item.item.clone(),

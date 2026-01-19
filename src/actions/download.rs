@@ -4,11 +4,11 @@ use crate::app::App;
 
 impl App {
     pub fn download_rom(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if !self.in_list || self.roms.is_empty() {
+        if !self.in_list || self.items_in_list.is_empty() {
             return Ok(());
         }
 
-        let selected_rom = &self.roms[self.items_list_state.selected().unwrap_or(0)];
+        let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
 
         let download_dir = Self::emux_base_path()
             .join("downloads")
@@ -36,11 +36,11 @@ impl App {
     }
 
     pub fn execute_command(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if !self.in_list || self.roms.is_empty() {
+        if !self.in_list || self.items_in_list.is_empty() {
             return Ok(());
         }
 
-        let selected_rom = &self.roms[self.items_list_state.selected().unwrap_or(0)];
+        let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
         let commands = self.get_current_commands();
 
         if commands.is_empty() {
