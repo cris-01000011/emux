@@ -64,6 +64,11 @@ impl App {
         self.save_favorites();
     }
 
+    pub fn toggle_favorites_mode(&mut self) {
+        self.favorites_mode = !self.favorites_mode;
+        self.load_list();
+    }
+
     pub fn is_favorite(&self, list: &str, item: &str) -> bool {
         self.favorites
             .iter()

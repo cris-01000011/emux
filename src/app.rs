@@ -40,8 +40,6 @@ pub struct App {
     // Search state
     pub in_search_mode: bool,
     pub search_query: String,
-    pub search_results: Vec<usize>,
-    pub search_selected: usize,
 
     // Favorites state
     pub favorites: Vec<FavoriteEntry>,
@@ -94,8 +92,6 @@ impl App {
 
             in_search_mode: false,
             search_query: String::new(),
-            search_results: Vec::new(),
-            search_selected: 0,
 
             favorites: Vec::new(),
             favorites_mode: false,
@@ -112,7 +108,7 @@ impl App {
         app
     }
 
-    fn init_lists(&mut self) {
+    pub fn init_lists(&mut self) {
         let dir = Self::lists_path();
 
         self.lists = fs::read_dir(&dir)
