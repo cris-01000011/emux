@@ -48,7 +48,7 @@ impl App {
 
             self.load_items_for_current_list();
 
-            if self.favorites_mode {
+            if self.favorite.in_favorites {
                 self.apply_favorites_filter_items();
             }
 
@@ -123,7 +123,7 @@ impl App {
 
     fn apply_favorites_filter_items(&mut self) {
         let current_list = self.current_list.clone();
-        let favorites = self.favorites.clone();
+        let favorites = self.favorite.list_favorites.clone();
 
         self.items_in_list.retain(|item| {
             favorites
@@ -191,8 +191,8 @@ impl App {
 
         match serde_json::from_str::<Vec<ListItem>>(&data) {
             Ok(mut roms) => {
-                if self.favorites_mode {
-                    roms.retain(|item| self.is_favorite(&self.current_list, &item.item));
+                if self.favorite.in_favorites {
+                    roms.retain(|item| self.favorite.is_favorite(&self.current_list, &item.item));
                 }
 
                 self.items_in_list = roms;

@@ -129,7 +129,7 @@ fn render_items_list(
         .iter()
         .enumerate()
         .map(|(_, item)| {
-            let is_favorite = app.is_favorite(&app.current_list, &item.item);
+            let is_favorite = app.favorite.is_favorite(&app.current_list, &item.item);
             let in_list = app.in_list;
 
             let (icon, icon_style) = if is_favorite {

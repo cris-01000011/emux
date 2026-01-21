@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::actions::{
-    favorite::FavoriteEntry,
+    favorite::Favorite,
     system::{Command, ListItem},
 };
 
@@ -42,8 +42,7 @@ pub struct App {
     pub search_query: String,
 
     // Favorites state
-    pub favorites: Vec<FavoriteEntry>,
-    pub favorites_mode: bool,
+    pub favorite: Favorite,
 
     // Memory for last selections - store ListState selected indices
     pub directory_selections: HashMap<String, usize>,
@@ -93,8 +92,7 @@ impl App {
             in_search_mode: false,
             search_query: String::new(),
 
-            favorites: Vec::new(),
-            favorites_mode: false,
+            favorite: Default::default(),
 
             directory_selections: HashMap::new(),
             list_selections: HashMap::new(),
@@ -103,7 +101,7 @@ impl App {
         app.init_lists();
         app.load_lists_commands();
         app.load_list();
-        app.load_favorites();
+        app.favorite.init_favorites();
 
         app
     }

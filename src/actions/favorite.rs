@@ -10,33 +10,48 @@ pub struct FavoriteEntry {
     pub url: String,
 }
 
-impl App {
-    fn favorites_path() -> PathBuf {
-        Self::emux_base_path()
+#[derive(Default)]
+pub struct Favorite {
+    favorites_path: PathBuf,
+
+    pub list_favorites: Vec<FavoriteEntry>,
+    pub in_favorites: bool,
+}
+
+impl Favorite {
+    fn get_favorites_path() -> PathBuf {
+        App::emux_base_path()
             .join("system-lists")
             .join("favorites.json")
     }
 
-    pub fn load_favorites(&mut self) {
-        let favorites_path = Self::favorites_path();
-        if let Ok(data) = std::fs::read_to_string(favorites_path) {
+    pub fn init_favorites(&mut self) {
+        self.favorites_path = Self::get_favorites_path();
+        if let Ok(data) = std::fs::read_to_string(&self.favorites_path) {
             if let Ok(favorites) = serde_json::from_str::<Vec<FavoriteEntry>>(&data) {
-                self.favorites = favorites;
+                self.list_favorites = favorites;
             }
         }
     }
 
-    pub fn save_favorites(&self) {
-        let favorites_path = Self::favorites_path();
-        if let Some(parent) = favorites_path.parent() {
+    pub fn update_favorites(&self) {
+        if let Some(parent) = self.favorites_path.parent() {
             let _ = fs::create_dir_all(parent);
         }
 
-        if let Ok(json) = serde_json::to_string_pretty(&self.favorites) {
-            let _ = std::fs::write(&favorites_path, json);
+        if let Ok(new_favorites_json) = serde_json::to_string_pretty(&self.list_favorites) {
+            let _ = std::fs::write(&self.favorites_path, new_favorites_json);
         }
     }
 
+    pub fn is_favorite(&self, list: &str, item: &str) -> bool {
+        self.list_favorites
+            .iter()
+            .any(|f| f.list == list && f.item == item)
+    }
+}
+
+impl App {
     pub fn toggle_favorite(&mut self) {
         if !self.in_list || self.items_in_list.is_empty() {
             return;
@@ -52,26 +67,21 @@ impl App {
         };
 
         if let Some(already_favorite) = self
-            .favorites
+            .favorite
+            .list_favorites
             .iter()
             .position(|f| f.list == new_favorite.list && f.item == new_favorite.item)
         {
-            self.favorites.remove(already_favorite);
+            self.favorite.list_favorites.remove(already_favorite);
         } else {
-            self.favorites.push(new_favorite);
+            self.favorite.list_favorites.push(new_favorite);
         }
 
-        self.save_favorites();
+        self.favorite.update_favorites();
     }
 
     pub fn toggle_favorites_mode(&mut self) {
-        self.favorites_mode = !self.favorites_mode;
+        self.favorite.in_favorites = !self.favorite.in_favorites;
         self.load_list();
-    }
-
-    pub fn is_favorite(&self, list: &str, item: &str) -> bool {
-        self.favorites
-            .iter()
-            .any(|f| f.list == list && f.item == item)
     }
 }

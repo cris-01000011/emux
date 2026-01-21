@@ -13,6 +13,7 @@ use ratatui::{
 mod actions;
 mod app;
 mod components;
+mod config;
 mod ui;
 
 use crate::app::App;
