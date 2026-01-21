@@ -1,22 +1,14 @@
-use home;
 use ratatui::widgets::ListState;
 use serde::Deserialize;
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::actions::{
-    favorite::Favorite,
-    system::{Command, ListItem},
+use crate::{
+    actions::{
+        favorite::Favorite,
+        system::{Command, ListItem},
+    },
+    config::app::AppConfig,
 };
-
-#[derive(Deserialize, Debug)]
-struct EmuxConfig {
-    paths: PathsConfig,
-}
-
-#[derive(Deserialize, Debug)]
-struct PathsConfig {
-    root: String,
-}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ListCommand {
@@ -50,37 +42,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn emux_base_path() -> PathBuf {
-        let Some(home) = home::home_dir() else {
-            return PathBuf::from("./Emux");
-        };
-
-        let config_path = home.join(".config/emux/emux.toml");
-
-        let Ok(config_content) = std::fs::read_to_string(&config_path) else {
-            return home.join("Emux");
-        };
-
-        let Ok(config) = toml::from_str::<EmuxConfig>(&config_content) else {
-            return home.join("Emux");
-        };
-
-        if config.paths.root != "default" {
-            return PathBuf::from(config.paths.root);
-        }
-
-        home.join("Emux")
-    }
-
-    pub fn lists_path() -> PathBuf {
-        Self::emux_base_path().join("lists")
-    }
-
     pub fn new() -> App {
         let mut app = App {
             lists_state: ListState::default().with_selected(Some(0)),
             items_in_list_state: ListState::default(),
-            current_path: Self::lists_path().clone(),
+            current_path: AppConfig::lists_dir(),
             lists: Vec::new(),
 
             in_list: false,
@@ -107,7 +73,7 @@ impl App {
     }
 
     pub fn init_lists(&mut self) {
-        let dir = Self::lists_path();
+        let dir = AppConfig::lists_dir();
 
         self.lists = fs::read_dir(&dir)
             .map(|rd| rd.filter_map(|e| e.ok()).map(|e| e.path()).collect())

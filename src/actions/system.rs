@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::app::App;
+use crate::{app::App, config::app::AppConfig};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Command {
@@ -16,7 +16,7 @@ pub struct ListItem {
 
 impl App {
     pub fn load_lists_commands(&mut self) {
-        let commands_path = Self::emux_base_path().join("lists_commands.json");
+        let commands_path = AppConfig::base_dir().join("lists_commands.json");
         let data = std::fs::read_to_string(&commands_path).unwrap_or_default();
         self.lists_commands = serde_json::from_str(&data).unwrap_or_default();
     }

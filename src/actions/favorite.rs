@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::{fs, path::PathBuf};
 
-use crate::app::App;
+use crate::{app::App, config::app::AppConfig};
 
 #[derive(Deserialize, Debug, Clone, serde::Serialize)]
 pub struct FavoriteEntry {
@@ -20,7 +20,7 @@ pub struct Favorite {
 
 impl Favorite {
     fn get_favorites_path() -> PathBuf {
-        App::emux_base_path()
+        AppConfig::base_dir()
             .join("system-lists")
             .join("favorites.json")
     }

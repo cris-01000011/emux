@@ -1,6 +1,6 @@
 use std::{fs, process::Command};
 
-use crate::app::App;
+use crate::{app::App, config::app::AppConfig};
 
 impl App {
     pub fn download_rom(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -10,7 +10,7 @@ impl App {
 
         let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
 
-        let download_dir = Self::emux_base_path()
+        let download_dir = AppConfig::base_dir()
             .join("downloads")
             .join(&self.current_list);
         fs::create_dir_all(&download_dir)?;
@@ -50,7 +50,7 @@ impl App {
         let selected_command = &commands[self.selected_command];
 
         // Get paths for variable substitution
-        let emux_path = Self::emux_base_path();
+        let emux_path = AppConfig::base_dir();
         let download_dir = emux_path.join("downloads").join(&self.current_list);
         let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
