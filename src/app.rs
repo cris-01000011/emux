@@ -37,7 +37,6 @@ pub struct App {
     pub favorite: Favorite,
 
     // Memory for last selections - store ListState selected indices
-    pub directory_selections: HashMap<String, usize>,
     pub list_selections: HashMap<String, usize>,
 }
 
@@ -60,7 +59,6 @@ impl App {
 
             favorite: Default::default(),
 
-            directory_selections: HashMap::new(),
             list_selections: HashMap::new(),
         };
 

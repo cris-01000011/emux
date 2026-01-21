@@ -180,12 +180,6 @@ impl App {
 
         self.items_in_list_state.select(Some(restored));
 
-        // Save directory selection
-        let path_str = self.current_path.to_string_lossy().to_string();
-        if let Some(selected) = self.lists_state.selected() {
-            self.directory_selections.insert(path_str, selected);
-        }
-
         // Load items
         let data = std::fs::read_to_string(path).unwrap_or_default();
 
