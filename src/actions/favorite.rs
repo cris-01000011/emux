@@ -78,9 +78,14 @@ impl App {
         }
 
         self.favorite.update_favorites();
+        self.load_list();
     }
 
     pub fn toggle_favorites_mode(&mut self) {
+        if !self.favorite.in_favorites {
+            self.items_in_list_state.select_first();
+        }
+
         self.favorite.in_favorites = !self.favorite.in_favorites;
         self.load_list();
     }
