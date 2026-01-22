@@ -12,8 +12,8 @@ impl App {
         self.search.search_query.clear();
 
         match self.navigation.view {
-            View::Lists => self.lists_state.select_first(),
-            View::Items => self.items_in_list_state.select_first(),
+            View::Lists => self.ui_state.lists_state.select_first(),
+            View::Items => self.ui_state.items_in_list_state.select_first(),
         };
     }
 

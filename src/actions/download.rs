@@ -1,6 +1,6 @@
 use std::{fs, process::Command};
 
-use crate::{actions::navigation::View, app::App, config::app::AppConfig};
+use crate::{actions::navigation::View, app::App};
 
 impl App {
     pub fn download_rom(&self) -> Result<(), Box<dyn std::error::Error>> {
@@ -8,9 +8,12 @@ impl App {
             return Ok(());
         }
 
-        let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
+        let selected_rom =
+            &self.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
 
-        let download_dir = AppConfig::base_dir()
+        let download_dir = self
+            .config
+            .base_dir
             .join("downloads")
             .join(&self.navigation.current_list);
         fs::create_dir_all(&download_dir)?;
@@ -46,35 +49,38 @@ impl App {
             return Ok(());
         }
 
-        let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
+        let selected_rom =
+            &self.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
 
         let selected_command = &commands[self.commands.selected_command];
 
         // Get paths for variable substitution
-        let emux_path = AppConfig::base_dir();
-        let download_dir = emux_path
+        let base_dir = &self.config.base_dir;
+
+        let download_dir = base_dir
             .join("downloads")
             .join(&self.navigation.current_list);
+
         let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
         let game_downloaded = rom_path.to_string_lossy();
 
         let retroarch_path = format!(
             "'{}/programs/retroarch/RetroArch-Linux-x86_64.AppImage'",
-            &emux_path.to_string_lossy()
+            &base_dir.to_string_lossy()
         );
 
         let duckstation_path = format!(
             "'{}/programs/duckstation/DuckStation-x64.AppImage'",
-            &emux_path.to_string_lossy()
+            &base_dir.to_string_lossy()
         );
 
         let ppsspp_app = format!(
             "'{}/programs/ppsspp/PPSSPP-v1.19.3-anylinux-x86_64.AppImage'",
-            &emux_path.to_string_lossy()
+            &base_dir.to_string_lossy()
         );
 
-        let ppsspp_path = format!("'{}/programs/ppsspp'", &emux_path.to_string_lossy());
+        let ppsspp_path = format!("'{}/programs/ppsspp'", &base_dir.to_string_lossy());
 
         // Prepare command with variable substitution
         let mut command_str = selected_command.command.clone();

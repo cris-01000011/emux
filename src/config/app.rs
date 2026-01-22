@@ -12,10 +12,21 @@ struct PathsConfig {
     base_dir: String,
 }
 
-pub struct AppConfig;
+#[derive(Default)]
+pub struct AppConfig {
+    pub base_dir: PathBuf,
+    pub lists_dir: PathBuf,
+}
 
 impl AppConfig {
-    pub fn base_dir() -> PathBuf {
+    pub fn load() -> Self {
+        Self {
+            base_dir: Self::get_base_dir(),
+            lists_dir: Self::get_lists_dir(),
+        }
+    }
+
+    pub fn get_base_dir() -> PathBuf {
         let Some(home) = home::home_dir() else {
             return PathBuf::from("./Emux");
         };
@@ -37,7 +48,7 @@ impl AppConfig {
         home.join("Emux")
     }
 
-    pub fn get_lists_dir() -> PathBuf {
-        Self::base_dir().join("lists")
+    fn get_lists_dir() -> PathBuf {
+        Self::get_base_dir().join("lists")
     }
 }

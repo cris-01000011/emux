@@ -1,7 +1,14 @@
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout},
+    widgets::ListState,
 };
+
+#[derive(Default)]
+pub struct UiState {
+    pub lists_state: ListState,
+    pub items_in_list_state: ListState,
+}
 
 use crate::components::{body, header};
 use crate::{app::App, components::footer};

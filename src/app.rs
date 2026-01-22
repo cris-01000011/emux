@@ -1,4 +1,3 @@
-use ratatui::widgets::ListState;
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
@@ -7,17 +6,17 @@ use crate::{
         system::ListItem,
     },
     config::app::AppConfig,
+    ui::UiState,
 };
 
 pub struct App {
-    pub lists_state: ListState,
-    pub items_in_list_state: ListState,
+    pub ui_state: UiState,
 
     pub lists: Vec<PathBuf>,
 
     pub items_in_list: Vec<ListItem>,
-    pub lists_dir: PathBuf,
 
+    pub config: AppConfig,
     pub navigation: Navigation,
     pub search: Search,
     pub commands: CommandLists,
@@ -29,12 +28,10 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         let mut app = App {
-            lists_state: ListState::default().with_selected(Some(0)),
-            items_in_list_state: ListState::default(),
+            ui_state: Default::default(),
             lists: Vec::new(),
             items_in_list: Vec::new(),
-            lists_dir: AppConfig::get_lists_dir(),
-
+            config: AppConfig::load(),
             navigation: Default::default(),
             search: Default::default(),
             commands: Default::default(),
@@ -45,16 +42,16 @@ impl App {
 
         app.load_default_lists();
         app.load_list();
-        app.commands.init_command_lists();
-        app.favorite.init_favorites();
+        app.init_command_lists();
+        app.init_favorites();
 
         app
     }
 
     pub fn load_default_lists(&mut self) {
-        let dir = AppConfig::get_lists_dir();
+        let dir = &self.config.lists_dir;
 
-        self.lists = fs::read_dir(&dir)
+        self.lists = fs::read_dir(dir)
             .map(|rd| rd.filter_map(|e| e.ok()).map(|e| e.path()).collect())
             .unwrap_or_default();
 

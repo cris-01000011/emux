@@ -14,7 +14,7 @@ impl App {
             self.load_current_commands();
             let selected_item = self
                 .items_in_list
-                .get(self.items_in_list_state.selected().unwrap_or(0))
+                .get(self.ui_state.items_in_list_state.selected().unwrap_or(0))
                 .cloned();
 
             self.load_items_for_current_list();
@@ -30,7 +30,7 @@ impl App {
                     if let Some(new_index) =
                         self.items_in_list.iter().position(|x| x.item == item.item)
                     {
-                        self.items_in_list_state.select(Some(new_index));
+                        self.ui_state.items_in_list_state.select(Some(new_index));
                     }
                 }
             }
@@ -51,14 +51,14 @@ impl App {
         if !self.search.in_search || self.search.search_query.is_empty() {
             let selected_path = self
                 .lists
-                .get(self.lists_state.selected().unwrap_or(0))
+                .get(self.ui_state.lists_state.selected().unwrap_or(0))
                 .cloned();
 
             self.load_default_lists();
 
             if let Some(path) = selected_path {
                 if let Some(new_index) = self.lists.iter().position(|p| p == &path) {
-                    self.lists_state.select(Some(new_index));
+                    self.ui_state.lists_state.select(Some(new_index));
                 }
             }
         }
@@ -75,6 +75,7 @@ impl App {
 
     fn load_items_for_current_list(&mut self) {
         let path = self
+            .config
             .lists_dir
             .join(format!("{}.json", self.navigation.current_list));
 
@@ -94,7 +95,7 @@ impl App {
 
     fn apply_favorites_filter_items(&mut self) {
         let current_list = self.navigation.current_list.clone();
-        let favorites = self.favorite.list_favorites.clone();
+        let favorites = self.favorite.list.clone();
 
         self.items_in_list.retain(|item| {
             favorites
@@ -115,16 +116,18 @@ impl App {
     }
 
     fn fix_items_selection(&mut self) {
-        if let Some(selected) = self.items_in_list_state.selected() {
+        if let Some(selected) = self.ui_state.items_in_list_state.selected() {
             let len = self.items_in_list.len();
             if selected >= len && len > 0 {
-                self.items_in_list_state.select(Some(len.saturating_sub(1)));
+                self.ui_state
+                    .items_in_list_state
+                    .select(Some(len.saturating_sub(1)));
             }
         }
     }
 
     fn selected_json_path(&self) -> Option<std::path::PathBuf> {
-        let selected = self.lists_state.selected().unwrap_or(0);
+        let selected = self.ui_state.lists_state.selected().unwrap_or(0);
         let path = self.lists.get(selected)?.clone();
 
         if path.extension().and_then(|s| s.to_str()) == Some("json") {
@@ -149,7 +152,7 @@ impl App {
             .copied()
             .unwrap_or(0);
 
-        self.items_in_list_state.select(Some(restored));
+        self.ui_state.items_in_list_state.select(Some(restored));
 
         // Load items
         let data = std::fs::read_to_string(path).unwrap_or_default();

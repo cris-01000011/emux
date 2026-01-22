@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{app::App, config::app::AppConfig, utils::string::remove_parentheses};
+use crate::{app::App, utils::string::remove_parentheses};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Command {
@@ -22,12 +22,6 @@ pub struct CommandLists {
 }
 
 impl CommandLists {
-    pub fn init_command_lists(&mut self) {
-        let commands_path = AppConfig::base_dir().join("lists_commands.json");
-        let command_lists = std::fs::read_to_string(&commands_path).unwrap_or_default();
-        self.lists = serde_json::from_str(&command_lists).unwrap_or_default();
-    }
-
     pub fn get_current_commands(&self) -> &[Command] {
         self.lists
             .get(self.selected_list)
@@ -55,6 +49,12 @@ impl CommandLists {
 }
 
 impl App {
+    pub fn init_command_lists(&mut self) {
+        let commands_path = self.config.base_dir.join("lists_commands.json");
+        let command_lists = std::fs::read_to_string(&commands_path).unwrap_or_default();
+        self.commands.lists = serde_json::from_str(&command_lists).unwrap_or_default();
+    }
+
     pub fn load_current_commands(&mut self) {
         let clean_list = remove_parentheses(&self.navigation.current_list);
 
