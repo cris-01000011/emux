@@ -57,7 +57,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 continue;
             }
 
-            if app.in_search_mode {
+            if app.search.in_search {
                 match key.code {
                     KeyCode::Esc => app.stop_search(),
                     KeyCode::Up => app.move_up(),

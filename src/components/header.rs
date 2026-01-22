@@ -27,7 +27,7 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
         .border_style(Style::default().fg(Color::Rgb(137, 180, 250)))
         .title("Search");
 
-    let search_text = app.search_query.clone();
+    let search_text = app.search.search_query.clone();
     let search_paragraph = Paragraph::new(search_text)
         .style(Color::Rgb(180, 190, 254))
         .block(search_block);

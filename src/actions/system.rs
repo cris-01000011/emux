@@ -23,7 +23,7 @@ impl App {
                 self.apply_favorites_filter_items();
             }
 
-            if self.in_search_mode {
+            if self.search.in_search {
                 self.apply_search_filter_items();
             } else {
                 if let Some(item) = selected_item {
@@ -48,7 +48,7 @@ impl App {
     }
 
     fn apply_search_filter_lists(&mut self) {
-        if !self.in_search_mode || self.search_query.is_empty() {
+        if !self.search.in_search || self.search.search_query.is_empty() {
             let selected_path = self
                 .lists
                 .get(self.lists_state.selected().unwrap_or(0))
@@ -63,7 +63,7 @@ impl App {
             }
         }
 
-        let q = self.search_query.to_lowercase();
+        let q = self.search.search_query.to_lowercase();
 
         self.lists.retain(|path| {
             path.file_stem()
@@ -104,7 +104,7 @@ impl App {
     }
 
     fn apply_search_filter_items(&mut self) {
-        let query_lower = self.search_query.to_lowercase();
+        let query_lower = self.search.search_query.to_lowercase();
 
         self.items_in_list = self
             .items_in_list

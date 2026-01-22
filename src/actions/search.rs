@@ -1,9 +1,15 @@
 use crate::app::App;
 
+#[derive(Default)]
+pub struct Search {
+    pub in_search: bool,
+    pub search_query: String,
+}
+
 impl App {
     pub fn start_search(&mut self) {
-        self.in_search_mode = true;
-        self.search_query.clear();
+        self.search.in_search = true;
+        self.search.search_query.clear();
 
         if self.in_list {
             self.items_in_list_state.select_first();
@@ -13,18 +19,18 @@ impl App {
     }
 
     pub fn stop_search(&mut self) {
-        self.in_search_mode = false;
-        self.search_query.clear();
+        self.search.in_search = false;
+        self.search.search_query.clear();
         self.load_list();
     }
 
     pub fn add_search_char(&mut self, c: char) {
-        self.search_query.push(c);
+        self.search.search_query.push(c);
         self.load_list();
     }
 
     pub fn remove_search_char(&mut self) {
-        self.search_query.pop();
+        self.search.search_query.pop();
         self.load_list();
     }
 }

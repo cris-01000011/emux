@@ -2,7 +2,7 @@ use ratatui::widgets::ListState;
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
-    actions::{commands::CommandLists, favorite::Favorite, system::ListItem},
+    actions::{commands::CommandLists, favorite::Favorite, search::Search, system::ListItem},
     config::app::AppConfig,
 };
 
@@ -17,13 +17,11 @@ pub struct App {
     pub items_in_list: Vec<ListItem>,
     pub current_list: String,
 
-    // Search state
-    pub in_search_mode: bool,
-    pub search_query: String,
-
+    pub search: Search,
     pub commands: CommandLists,
     pub favorite: Favorite,
 
+    // Memory for last selections - store ListState selected indices
     pub list_selections: HashMap<String, usize>,
 }
 
@@ -39,9 +37,7 @@ impl App {
             lists: Vec::new(),
             items_in_list: Vec::new(),
 
-            in_search_mode: false,
-            search_query: String::new(),
-
+            search: Default::default(),
             commands: Default::default(),
             favorite: Default::default(),
 
