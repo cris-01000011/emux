@@ -1,13 +1,18 @@
-pub fn remove_parentheses(input: &str) -> String {
-    input.split('(').next().unwrap_or(input).trim().to_string()
+pub fn cut_at(input: &str, delim: char) -> &str {
+    input.split(delim).next().unwrap_or(input).trim()
 }
 
-pub fn remove_brackets(input: &str) -> String {
-    input.split('[').next().unwrap_or(input).trim().to_string()
+pub fn remove_extension(input: &str) -> &str {
+    input
+        .rsplit_once('.')
+        .map(|(name, _)| name)
+        .unwrap_or(input)
 }
 
 pub fn clean_all(input: &str) -> String {
-    let input = remove_parentheses(input);
-    let input = remove_brackets(&input);
-    input
+    let input = cut_at(input, '(');
+    let input = cut_at(input, '[');
+    let input = remove_extension(input);
+
+    input.trim().to_string()
 }

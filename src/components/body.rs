@@ -131,9 +131,8 @@ fn render_items_list(
         .iter()
         .enumerate()
         .map(|(_, item)| {
-            let is_favorite = app
-                .favorite
-                .is_favorite(&app.navigation.current_list, &item.item);
+            let list = app.current_list_name();
+            let is_favorite = app.favorite.is_favorite(list, &item.item);
             let in_list = app.navigation.view == View::Items;
 
             let (icon, icon_style) = if is_favorite {

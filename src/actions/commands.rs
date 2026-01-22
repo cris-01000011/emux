@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::{app::App, utils::string::remove_parentheses};
+use crate::{app::App, utils::string::cut_at};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct Command {
@@ -56,7 +56,8 @@ impl App {
     }
 
     pub fn load_current_commands(&mut self) {
-        let clean_list = remove_parentheses(&self.navigation.current_list);
+        let list = self.current_list_name();
+        let clean_list = cut_at(list, '(');
 
         self.commands.selected_list = self
             .commands

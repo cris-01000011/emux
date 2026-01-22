@@ -57,8 +57,9 @@ impl App {
         let selected_item_index = self.ui_state.items_in_list.selected().unwrap_or(0);
         let selected_item = &self.data.items_in_list[selected_item_index];
 
+        let list = self.current_list_name();
         let new_favorite = FavoriteEntry {
-            list: self.navigation.current_list.clone(),
+            list: list.to_string(),
             item: selected_item.item.clone(),
             url: selected_item.url.clone(),
         };
@@ -75,7 +76,7 @@ impl App {
         }
 
         self.favorite.update_favorites();
-        self.load_list();
+        self.reload_data();
     }
 
     pub fn toggle_favorites_mode(&mut self) {
@@ -84,6 +85,6 @@ impl App {
         }
 
         self.favorite.in_favorites = !self.favorite.in_favorites;
-        self.load_list();
+        self.reload_data();
     }
 }

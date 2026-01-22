@@ -20,16 +20,16 @@ impl App {
     pub fn stop_search(&mut self) {
         self.search.in_search = false;
         self.search.search_query.clear();
-        self.load_list();
+        self.reload_data();
     }
 
     pub fn add_search_char(&mut self, c: char) {
         self.search.search_query.push(c);
-        self.load_list();
+        self.reload_data();
     }
 
     pub fn remove_search_char(&mut self) {
         self.search.search_query.pop();
-        self.load_list();
+        self.reload_data();
     }
 }

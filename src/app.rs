@@ -1,7 +1,7 @@
 use crate::{
     actions::{
-        commands::CommandLists, favorite::Favorite, navigation::Navigation, search::Search,
-        system::AppData,
+        commands::CommandLists, data::AppData, favorite::Favorite, navigation::Navigation,
+        search::Search,
     },
     config::app::AppConfig,
     ui::UiState,
@@ -29,8 +29,7 @@ impl App {
             ui_state: Default::default(),
         };
 
-        app.load_default_lists();
-        app.load_list();
+        app.init_lists();
         app.init_command_lists();
         app.init_favorites();
 

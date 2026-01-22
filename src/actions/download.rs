@@ -11,11 +11,8 @@ impl App {
         let selected_rom =
             &self.data.items_in_list[self.ui_state.items_in_list.selected().unwrap_or(0)];
 
-        let download_dir = self
-            .config
-            .base_dir
-            .join("downloads")
-            .join(&self.navigation.current_list);
+        let list = self.current_list_name();
+        let download_dir = self.config.base_dir.join("downloads").join(list);
         fs::create_dir_all(&download_dir)?;
 
         let clean_title = Self::sanitize_filename(&selected_rom.item);
@@ -57,9 +54,8 @@ impl App {
         // Get paths for variable substitution
         let base_dir = &self.config.base_dir;
 
-        let download_dir = base_dir
-            .join("downloads")
-            .join(&self.navigation.current_list);
+        let list = self.current_list_name();
+        let download_dir = base_dir.join("downloads").join(list);
 
         let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);

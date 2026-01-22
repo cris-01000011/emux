@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use rand::Rng;
 use ratatui::widgets::ListState;
 
@@ -13,7 +15,7 @@ pub enum View {
 #[derive(Default)]
 pub struct Navigation {
     pub view: View,
-    pub current_list: String,
+    pub current_list_path: Option<PathBuf>,
 }
 
 impl App {
@@ -33,17 +35,17 @@ impl App {
 
     pub fn move_up(&mut self) {
         self.current_list_state().select_previous();
-        self.load_list();
+        self.reload_data();
     }
 
     pub fn move_down(&mut self) {
         self.current_list_state().select_next();
-        self.load_list();
+        self.reload_data();
     }
 
     pub fn go_to_first_item(&mut self) {
         self.current_list_state().select_first();
-        self.load_list();
+        self.reload_data();
     }
 
     pub fn go_to_last_item(&mut self) {
@@ -51,7 +53,7 @@ impl App {
 
         if len > 0 {
             self.current_list_state().select(Some(len - 1));
-            self.load_list();
+            self.reload_data();
         }
     }
 
@@ -61,7 +63,7 @@ impl App {
         if len > 0 {
             let random_index = rand::thread_rng().gen_range(0..len);
             self.current_list_state().select(Some(random_index));
-            self.load_list();
+            self.reload_data();
         }
     }
 
@@ -84,12 +86,16 @@ impl App {
             return;
         }
 
+        let list = self.current_list_name();
+
         if let Some(item_selected) = self.ui_state.items_in_list.selected() {
             self.data
-                .list_selections
-                .insert(self.navigation.current_list.clone(), item_selected);
+                .items_in_list_selections
+                .insert(list.into(), item_selected);
         }
 
         self.navigation.view = View::Lists;
+        self.save_item_selected();
+        self.reload_data();
     }
 }
