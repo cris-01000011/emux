@@ -24,7 +24,6 @@ pub struct App {
     pub commands: CommandLists,
     pub favorite: Favorite,
 
-    // Memory for last selections - store ListState selected indices
     pub list_selections: HashMap<String, usize>,
 }
 
