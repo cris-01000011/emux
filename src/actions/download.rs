@@ -40,14 +40,15 @@ impl App {
             return Ok(());
         }
 
-        let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
-        let commands = self.get_current_commands();
+        let commands = self.commands.get_current_commands();
 
         if commands.is_empty() {
             return Ok(());
         }
 
-        let selected_command = &commands[self.selected_command];
+        let selected_rom = &self.items_in_list[self.items_in_list_state.selected().unwrap_or(0)];
+
+        let selected_command = &commands[self.commands.selected_command];
 
         // Get paths for variable substitution
         let emux_path = AppConfig::base_dir();

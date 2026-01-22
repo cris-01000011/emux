@@ -5,16 +5,16 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Paragraph, Tabs},
 };
 
-use crate::{actions::system::Command, app::App};
+use crate::{actions::commands::Command, app::App};
 
 pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
-    let commands = app.get_current_commands();
+    let commands = app.commands.get_current_commands();
 
     let selected_style = Style::default()
         .bg(Color::Rgb(203, 166, 247))
         .fg(Color::Black);
 
-    let line = generate_tabs(app, commands);
+    let line = generate_tabs(app, commands.to_vec());
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -41,7 +41,7 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
 
     let tabs = Tabs::new(line)
         .block(tabs_block)
-        .select(app.selected_command)
+        .select(app.commands.selected_command)
         .highlight_style(selected_style)
         .divider("");
 
@@ -60,7 +60,7 @@ fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {
             .bg(Color::Rgb(180, 190, 254))
             .fg(Color::Black);
 
-        let text = if app.in_list && i == app.selected_command {
+        let text = if app.in_list && i == app.commands.selected_command {
             format!(" {} ", cmd.name)
         } else {
             format!("  {}  ", i + 1)

@@ -55,7 +55,6 @@ impl App {
     }
 
     pub fn open_list(&mut self) {
-        self.selected_command = 0;
         self.in_list = true;
     }
 

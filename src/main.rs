@@ -15,6 +15,7 @@ mod app;
 mod components;
 mod config;
 mod ui;
+mod utils;
 
 use crate::app::App;
 use crate::ui::ui;
@@ -77,8 +78,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Left => app.go_back(),
                     KeyCode::Enter => app.open_file(),
                     KeyCode::Backspace => app.go_back(),
-                    KeyCode::Tab => app.next_command(),
-                    KeyCode::BackTab => app.prev_command(),
+                    KeyCode::Tab => app.commands.next_command(),
+                    KeyCode::BackTab => app.commands.prev_command(),
                     KeyCode::Char('b') => app.open_browser_search(),
                     KeyCode::Char('F') => app.toggle_favorites_mode(),
                     KeyCode::Char('f') => app.toggle_favorite(),
