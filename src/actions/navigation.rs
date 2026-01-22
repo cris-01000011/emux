@@ -26,8 +26,8 @@ impl App {
 
     fn current_list_len(&self) -> usize {
         match self.navigation.view {
-            View::Lists => self.lists.len(),
-            View::Items => self.items_in_list.len(),
+            View::Lists => self.data.lists.len(),
+            View::Items => self.data.items_in_list.len(),
         }
     }
 
@@ -85,7 +85,8 @@ impl App {
         }
 
         if let Some(item_selected) = self.ui_state.items_in_list_state.selected() {
-            self.list_selections
+            self.data
+                .list_selections
                 .insert(self.navigation.current_list.clone(), item_selected);
         }
 

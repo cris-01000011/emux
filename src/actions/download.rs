@@ -4,12 +4,12 @@ use crate::{actions::navigation::View, app::App};
 
 impl App {
     pub fn download_rom(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
             return Ok(());
         }
 
         let selected_rom =
-            &self.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
+            &self.data.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
 
         let download_dir = self
             .config
@@ -39,7 +39,7 @@ impl App {
     }
 
     pub fn execute_command(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
             return Ok(());
         }
 
@@ -50,7 +50,7 @@ impl App {
         }
 
         let selected_rom =
-            &self.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
+            &self.data.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
 
         let selected_command = &commands[self.commands.selected_command];
 

@@ -25,12 +25,12 @@ impl App {
     }
 
     pub fn open_browser_search(&self) {
-        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
             return;
         }
 
         let selected_rom =
-            &self.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
+            &self.data.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
 
         let clean_title = Self::normalize_game_title(&selected_rom.item);
         let clean_list = Self::normalize_game_title(&self.navigation.current_list);

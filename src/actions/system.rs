@@ -13,6 +13,7 @@ impl App {
         if self.navigation.view == View::Items {
             self.load_current_commands();
             let selected_item = self
+                .data
                 .items_in_list
                 .get(self.ui_state.items_in_list_state.selected().unwrap_or(0))
                 .cloned();
@@ -27,8 +28,11 @@ impl App {
                 self.apply_search_filter_items();
             } else {
                 if let Some(item) = selected_item {
-                    if let Some(new_index) =
-                        self.items_in_list.iter().position(|x| x.item == item.item)
+                    if let Some(new_index) = self
+                        .data
+                        .items_in_list
+                        .iter()
+                        .position(|x| x.item == item.item)
                     {
                         self.ui_state.items_in_list_state.select(Some(new_index));
                     }
@@ -50,6 +54,7 @@ impl App {
     fn apply_search_filter_lists(&mut self) {
         if !self.search.in_search || self.search.search_query.is_empty() {
             let selected_path = self
+                .data
                 .lists
                 .get(self.ui_state.lists_state.selected().unwrap_or(0))
                 .cloned();
@@ -57,7 +62,7 @@ impl App {
             self.load_default_lists();
 
             if let Some(path) = selected_path {
-                if let Some(new_index) = self.lists.iter().position(|p| p == &path) {
+                if let Some(new_index) = self.data.lists.iter().position(|p| p == &path) {
                     self.ui_state.lists_state.select(Some(new_index));
                 }
             }
@@ -65,7 +70,7 @@ impl App {
 
         let q = self.search.search_query.to_lowercase();
 
-        self.lists.retain(|path| {
+        self.data.lists.retain(|path| {
             path.file_stem()
                 .and_then(|s| s.to_str())
                 .map(|name| name.to_lowercase().contains(&q))
@@ -84,11 +89,11 @@ impl App {
         match serde_json::from_str::<Vec<ListItem>>(&data) {
             Ok(roms) => {
                 // Always load full data first
-                self.items_in_list = roms;
+                self.data.items_in_list = roms;
             }
             Err(e) => {
                 eprintln!("Error parsing JSON for {}: {}", path.display(), e);
-                self.items_in_list = Vec::new();
+                self.data.items_in_list = Vec::new();
             }
         }
     }
@@ -97,7 +102,7 @@ impl App {
         let current_list = self.navigation.current_list.clone();
         let favorites = self.favorite.list.clone();
 
-        self.items_in_list.retain(|item| {
+        self.data.items_in_list.retain(|item| {
             favorites
                 .iter()
                 .any(|f| f.list == current_list && f.item == item.item)
@@ -107,7 +112,8 @@ impl App {
     fn apply_search_filter_items(&mut self) {
         let query_lower = self.search.search_query.to_lowercase();
 
-        self.items_in_list = self
+        self.data.items_in_list = self
+            .data
             .items_in_list
             .iter()
             .filter(|rom| rom.item.to_lowercase().contains(&query_lower))
@@ -117,7 +123,7 @@ impl App {
 
     fn fix_items_selection(&mut self) {
         if let Some(selected) = self.ui_state.items_in_list_state.selected() {
-            let len = self.items_in_list.len();
+            let len = self.data.items_in_list.len();
             if selected >= len && len > 0 {
                 self.ui_state
                     .items_in_list_state
@@ -128,7 +134,7 @@ impl App {
 
     fn selected_json_path(&self) -> Option<std::path::PathBuf> {
         let selected = self.ui_state.lists_state.selected().unwrap_or(0);
-        let path = self.lists.get(selected)?.clone();
+        let path = self.data.lists.get(selected)?.clone();
 
         if path.extension().and_then(|s| s.to_str()) == Some("json") {
             Some(path)
@@ -147,6 +153,7 @@ impl App {
 
         // Restore previous selection
         let restored = self
+            .data
             .list_selections
             .get(&self.navigation.current_list)
             .copied()
@@ -166,11 +173,11 @@ impl App {
                     });
                 }
 
-                self.items_in_list = roms;
+                self.data.items_in_list = roms;
             }
             Err(e) => {
                 eprintln!("Error parsing JSON for {}: {}", path.display(), e);
-                self.items_in_list = Vec::new();
+                self.data.items_in_list = Vec::new();
             }
         }
     }

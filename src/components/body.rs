@@ -96,6 +96,7 @@ fn render_directory_list(
     block: &Block<'static>,
 ) {
     let items: Vec<ListItem> = app
+        .data
         .lists
         .iter()
         .enumerate()
@@ -125,6 +126,7 @@ fn render_items_list(
     block: &Block<'static>,
 ) {
     let items: Vec<ListItem> = app
+        .data
         .items_in_list
         .iter()
         .enumerate()

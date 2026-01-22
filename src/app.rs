@@ -9,35 +9,33 @@ use crate::{
     ui::UiState,
 };
 
-pub struct App {
-    pub ui_state: UiState,
-
+#[derive(Default)]
+pub struct AppData {
     pub lists: Vec<PathBuf>,
-
     pub items_in_list: Vec<ListItem>,
+    pub list_selections: HashMap<String, usize>,
+}
 
+pub struct App {
+    pub commands: CommandLists,
     pub config: AppConfig,
+    pub data: AppData,
+    pub favorite: Favorite,
     pub navigation: Navigation,
     pub search: Search,
-    pub commands: CommandLists,
-    pub favorite: Favorite,
-
-    pub list_selections: HashMap<String, usize>,
+    pub ui_state: UiState,
 }
 
 impl App {
     pub fn new() -> App {
         let mut app = App {
-            ui_state: Default::default(),
-            lists: Vec::new(),
-            items_in_list: Vec::new(),
+            commands: Default::default(),
             config: AppConfig::load(),
+            data: Default::default(),
+            favorite: Default::default(),
             navigation: Default::default(),
             search: Default::default(),
-            commands: Default::default(),
-            favorite: Default::default(),
-
-            list_selections: HashMap::new(),
+            ui_state: Default::default(),
         };
 
         app.load_default_lists();
@@ -51,10 +49,10 @@ impl App {
     pub fn load_default_lists(&mut self) {
         let dir = &self.config.lists_dir;
 
-        self.lists = fs::read_dir(dir)
+        self.data.lists = fs::read_dir(dir)
             .map(|rd| rd.filter_map(|e| e.ok()).map(|e| e.path()).collect())
             .unwrap_or_default();
 
-        self.lists.sort();
+        self.data.lists.sort();
     }
 }

@@ -50,12 +50,12 @@ impl App {
     }
 
     pub fn toggle_favorite(&mut self) {
-        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
             return;
         }
 
         let selected_item_index = self.ui_state.items_in_list_state.selected().unwrap_or(0);
-        let selected_item = &self.items_in_list[selected_item_index];
+        let selected_item = &self.data.items_in_list[selected_item_index];
 
         let new_favorite = FavoriteEntry {
             list: self.navigation.current_list.clone(),
