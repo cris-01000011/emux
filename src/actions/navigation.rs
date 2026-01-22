@@ -19,8 +19,8 @@ pub struct Navigation {
 impl App {
     fn current_list_state(&mut self) -> &mut ListState {
         match self.navigation.view {
-            View::Lists => &mut self.ui_state.lists_state,
-            View::Items => &mut self.ui_state.items_in_list_state,
+            View::Lists => &mut self.ui_state.lists,
+            View::Items => &mut self.ui_state.items_in_list,
         }
     }
 
@@ -84,7 +84,7 @@ impl App {
             return;
         }
 
-        if let Some(item_selected) = self.ui_state.items_in_list_state.selected() {
+        if let Some(item_selected) = self.ui_state.items_in_list.selected() {
             self.data
                 .list_selections
                 .insert(self.navigation.current_list.clone(), item_selected);

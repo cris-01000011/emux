@@ -9,7 +9,7 @@ impl App {
         }
 
         let selected_rom =
-            &self.data.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
+            &self.data.items_in_list[self.ui_state.items_in_list.selected().unwrap_or(0)];
 
         let download_dir = self
             .config
@@ -50,7 +50,7 @@ impl App {
         }
 
         let selected_rom =
-            &self.data.items_in_list[self.ui_state.items_in_list_state.selected().unwrap_or(0)];
+            &self.data.items_in_list[self.ui_state.items_in_list.selected().unwrap_or(0)];
 
         let selected_command = &commands[self.commands.selected_command];
 

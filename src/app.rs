@@ -1,20 +1,11 @@
-use std::{collections::HashMap, fs, path::PathBuf};
-
 use crate::{
     actions::{
         commands::CommandLists, favorite::Favorite, navigation::Navigation, search::Search,
-        system::ListItem,
+        system::AppData,
     },
     config::app::AppConfig,
     ui::UiState,
 };
-
-#[derive(Default)]
-pub struct AppData {
-    pub lists: Vec<PathBuf>,
-    pub items_in_list: Vec<ListItem>,
-    pub list_selections: HashMap<String, usize>,
-}
 
 pub struct App {
     pub commands: CommandLists,
@@ -44,15 +35,5 @@ impl App {
         app.init_favorites();
 
         app
-    }
-
-    pub fn load_default_lists(&mut self) {
-        let dir = &self.config.lists_dir;
-
-        self.data.lists = fs::read_dir(dir)
-            .map(|rd| rd.filter_map(|e| e.ok()).map(|e| e.path()).collect())
-            .unwrap_or_default();
-
-        self.data.lists.sort();
     }
 }

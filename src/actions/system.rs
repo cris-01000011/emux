@@ -1,6 +1,15 @@
+use std::{collections::HashMap, fs, path::PathBuf};
+
 use serde::Deserialize;
 
 use crate::{actions::navigation::View, app::App};
+
+#[derive(Default)]
+pub struct AppData {
+    pub lists: Vec<PathBuf>,
+    pub items_in_list: Vec<ListItem>,
+    pub list_selections: HashMap<String, usize>,
+}
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ListItem {
@@ -9,13 +18,23 @@ pub struct ListItem {
 }
 
 impl App {
+    pub fn load_default_lists(&mut self) {
+        let dir = &self.config.lists_dir;
+
+        self.data.lists = fs::read_dir(dir)
+            .map(|rd| rd.filter_map(|e| e.ok()).map(|e| e.path()).collect())
+            .unwrap_or_default();
+
+        self.data.lists.sort();
+    }
+
     pub fn load_list(&mut self) {
         if self.navigation.view == View::Items {
             self.load_current_commands();
             let selected_item = self
                 .data
                 .items_in_list
-                .get(self.ui_state.items_in_list_state.selected().unwrap_or(0))
+                .get(self.ui_state.items_in_list.selected().unwrap_or(0))
                 .cloned();
 
             self.load_items_for_current_list();
@@ -34,7 +53,7 @@ impl App {
                         .iter()
                         .position(|x| x.item == item.item)
                     {
-                        self.ui_state.items_in_list_state.select(Some(new_index));
+                        self.ui_state.items_in_list.select(Some(new_index));
                     }
                 }
             }
@@ -56,14 +75,14 @@ impl App {
             let selected_path = self
                 .data
                 .lists
-                .get(self.ui_state.lists_state.selected().unwrap_or(0))
+                .get(self.ui_state.lists.selected().unwrap_or(0))
                 .cloned();
 
             self.load_default_lists();
 
             if let Some(path) = selected_path {
                 if let Some(new_index) = self.data.lists.iter().position(|p| p == &path) {
-                    self.ui_state.lists_state.select(Some(new_index));
+                    self.ui_state.lists.select(Some(new_index));
                 }
             }
         }
@@ -122,18 +141,18 @@ impl App {
     }
 
     fn fix_items_selection(&mut self) {
-        if let Some(selected) = self.ui_state.items_in_list_state.selected() {
+        if let Some(selected) = self.ui_state.items_in_list.selected() {
             let len = self.data.items_in_list.len();
             if selected >= len && len > 0 {
                 self.ui_state
-                    .items_in_list_state
+                    .items_in_list
                     .select(Some(len.saturating_sub(1)));
             }
         }
     }
 
     fn selected_json_path(&self) -> Option<std::path::PathBuf> {
-        let selected = self.ui_state.lists_state.selected().unwrap_or(0);
+        let selected = self.ui_state.lists.selected().unwrap_or(0);
         let path = self.data.lists.get(selected)?.clone();
 
         if path.extension().and_then(|s| s.to_str()) == Some("json") {
@@ -159,7 +178,7 @@ impl App {
             .copied()
             .unwrap_or(0);
 
-        self.ui_state.items_in_list_state.select(Some(restored));
+        self.ui_state.items_in_list.select(Some(restored));
 
         // Load items
         let data = std::fs::read_to_string(path).unwrap_or_default();

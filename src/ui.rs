@@ -6,8 +6,8 @@ use ratatui::{
 
 #[derive(Default)]
 pub struct UiState {
-    pub lists_state: ListState,
-    pub items_in_list_state: ListState,
+    pub lists: ListState,
+    pub items_in_list: ListState,
 }
 
 use crate::components::{body, header};
