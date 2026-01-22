@@ -37,7 +37,7 @@ impl AppConfig {
         home.join("Emux")
     }
 
-    pub fn lists_dir() -> PathBuf {
+    pub fn get_lists_dir() -> PathBuf {
         Self::base_dir().join("lists")
     }
 }

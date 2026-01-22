@@ -1,10 +1,10 @@
 use std::{fs, process::Command};
 
-use crate::{app::App, config::app::AppConfig};
+use crate::{actions::navigation::View, app::App, config::app::AppConfig};
 
 impl App {
     pub fn download_rom(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if !self.in_list || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
             return Ok(());
         }
 
@@ -12,7 +12,7 @@ impl App {
 
         let download_dir = AppConfig::base_dir()
             .join("downloads")
-            .join(&self.current_list);
+            .join(&self.navigation.current_list);
         fs::create_dir_all(&download_dir)?;
 
         let clean_title = Self::sanitize_filename(&selected_rom.item);
@@ -36,7 +36,7 @@ impl App {
     }
 
     pub fn execute_command(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if !self.in_list || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
             return Ok(());
         }
 
@@ -52,7 +52,9 @@ impl App {
 
         // Get paths for variable substitution
         let emux_path = AppConfig::base_dir();
-        let download_dir = emux_path.join("downloads").join(&self.current_list);
+        let download_dir = emux_path
+            .join("downloads")
+            .join(&self.navigation.current_list);
         let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
         let game_downloaded = rom_path.to_string_lossy();

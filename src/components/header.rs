@@ -5,7 +5,10 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Paragraph, Tabs},
 };
 
-use crate::{actions::commands::Command, app::App};
+use crate::{
+    actions::{commands::Command, navigation::View},
+    app::App,
+};
 
 pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
     let commands = app.commands.get_current_commands();
@@ -49,7 +52,7 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
 }
 
 fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {
-    if !app.in_list {
+    if app.navigation.view == View::Lists {
         return Line::default();
     }
 
@@ -60,7 +63,7 @@ fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {
             .bg(Color::Rgb(180, 190, 254))
             .fg(Color::Black);
 
-        let text = if app.in_list && i == app.commands.selected_command {
+        let text = if app.navigation.view == View::Items && i == app.commands.selected_command {
             format!(" {} ", cmd.name)
         } else {
             format!("  {}  ", i + 1)

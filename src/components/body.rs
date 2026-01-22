@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, HighlightSpacing, List, ListItem},
 };
 
-use crate::app::App;
+use crate::{actions::navigation::View, app::App};
 
 pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let horizontal = Layout::default()
@@ -129,8 +129,10 @@ fn render_items_list(
         .iter()
         .enumerate()
         .map(|(_, item)| {
-            let is_favorite = app.favorite.is_favorite(&app.current_list, &item.item);
-            let in_list = app.in_list;
+            let is_favorite = app
+                .favorite
+                .is_favorite(&app.navigation.current_list, &item.item);
+            let in_list = app.navigation.view == View::Items;
 
             let (icon, icon_style) = if is_favorite {
                 ("󰋑 ", styles.favorite)
@@ -155,7 +157,7 @@ fn render_items_list(
 
     let mut list = List::new(items).block(block.clone());
 
-    if app.in_list {
+    if app.navigation.view == View::Items {
         list = list.highlight_style(styles.selected);
     }
 

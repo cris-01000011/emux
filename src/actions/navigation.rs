@@ -3,20 +3,31 @@ use ratatui::widgets::ListState;
 
 use crate::app::App;
 
+#[derive(Debug, Clone, Copy, PartialEq, Default, Eq)]
+pub enum View {
+    #[default]
+    Lists,
+    Items,
+}
+
+#[derive(Default)]
+pub struct Navigation {
+    pub view: View,
+    pub current_list: String,
+}
+
 impl App {
     fn current_list_state(&mut self) -> &mut ListState {
-        if self.in_list {
-            &mut self.items_in_list_state
-        } else {
-            &mut self.lists_state
+        match self.navigation.view {
+            View::Lists => &mut self.lists_state,
+            View::Items => &mut self.items_in_list_state,
         }
     }
 
     fn current_list_len(&self) -> usize {
-        if self.in_list {
-            self.items_in_list.len()
-        } else {
-            self.lists.len()
+        match self.navigation.view {
+            View::Lists => self.lists.len(),
+            View::Items => self.items_in_list.len(),
         }
     }
 
@@ -55,11 +66,11 @@ impl App {
     }
 
     pub fn open_list(&mut self) {
-        self.in_list = true;
+        self.navigation.view = View::Items;
     }
 
     pub fn open_file(&mut self) {
-        if !self.in_list {
+        if self.navigation.view == View::Lists {
             return self.open_list();
         }
 
@@ -69,15 +80,15 @@ impl App {
     }
 
     pub fn go_back(&mut self) {
-        if !self.in_list {
+        if self.navigation.view == View::Lists {
             return;
         }
 
         if let Some(item_selected) = self.items_in_list_state.selected() {
             self.list_selections
-                .insert(self.current_list.clone(), item_selected);
+                .insert(self.navigation.current_list.clone(), item_selected);
         }
 
-        self.in_list = false;
+        self.navigation.view = View::Lists;
     }
 }

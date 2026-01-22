@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::app::App;
+use crate::{actions::navigation::View, app::App};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ListItem {
@@ -10,7 +10,7 @@ pub struct ListItem {
 
 impl App {
     pub fn load_list(&mut self) {
-        if self.in_list {
+        if self.navigation.view == View::Items {
             self.load_current_commands();
             let selected_item = self
                 .items_in_list
@@ -75,8 +75,8 @@ impl App {
 
     fn load_items_for_current_list(&mut self) {
         let path = self
-            .current_path
-            .join(format!("{}.json", self.current_list));
+            .lists_dir
+            .join(format!("{}.json", self.navigation.current_list));
 
         let data = std::fs::read_to_string(&path).unwrap_or_default();
 
@@ -93,7 +93,7 @@ impl App {
     }
 
     fn apply_favorites_filter_items(&mut self) {
-        let current_list = self.current_list.clone();
+        let current_list = self.navigation.current_list.clone();
         let favorites = self.favorite.list_favorites.clone();
 
         self.items_in_list.retain(|item| {
@@ -136,7 +136,7 @@ impl App {
 
     fn enter_selected_list(&mut self, path: &std::path::Path) {
         // Set current list name
-        self.current_list = path
+        self.navigation.current_list = path
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
@@ -145,7 +145,7 @@ impl App {
         // Restore previous selection
         let restored = self
             .list_selections
-            .get(&self.current_list)
+            .get(&self.navigation.current_list)
             .copied()
             .unwrap_or(0);
 
@@ -157,7 +157,10 @@ impl App {
         match serde_json::from_str::<Vec<ListItem>>(&data) {
             Ok(mut roms) => {
                 if self.favorite.in_favorites {
-                    roms.retain(|item| self.favorite.is_favorite(&self.current_list, &item.item));
+                    roms.retain(|item| {
+                        self.favorite
+                            .is_favorite(&self.navigation.current_list, &item.item)
+                    });
                 }
 
                 self.items_in_list = roms;

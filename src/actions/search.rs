@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::{actions::navigation::View, app::App};
 
 #[derive(Default)]
 pub struct Search {
@@ -11,11 +11,10 @@ impl App {
         self.search.in_search = true;
         self.search.search_query.clear();
 
-        if self.in_list {
-            self.items_in_list_state.select_first();
-        } else {
-            self.lists_state.select_first();
-        }
+        match self.navigation.view {
+            View::Lists => self.lists_state.select_first(),
+            View::Items => self.items_in_list_state.select_first(),
+        };
     }
 
     pub fn stop_search(&mut self) {

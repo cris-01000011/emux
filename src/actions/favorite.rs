@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::{fs, path::PathBuf};
 
-use crate::{app::App, config::app::AppConfig};
+use crate::{actions::navigation::View, app::App, config::app::AppConfig};
 
 #[derive(Deserialize, Debug, Clone, serde::Serialize)]
 pub struct FavoriteEntry {
@@ -53,7 +53,7 @@ impl Favorite {
 
 impl App {
     pub fn toggle_favorite(&mut self) {
-        if !self.in_list || self.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.items_in_list.is_empty() {
             return;
         }
 
@@ -61,7 +61,7 @@ impl App {
         let selected_item = &self.items_in_list[selected_item_index];
 
         let new_favorite = FavoriteEntry {
-            list: self.current_list.clone(),
+            list: self.navigation.current_list.clone(),
             item: selected_item.item.clone(),
             url: selected_item.url.clone(),
         };

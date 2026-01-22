@@ -56,7 +56,7 @@ impl CommandLists {
 
 impl App {
     pub fn load_current_commands(&mut self) {
-        let clean_list = remove_parentheses(&self.current_list);
+        let clean_list = remove_parentheses(&self.navigation.current_list);
 
         self.commands.selected_list = self
             .commands
