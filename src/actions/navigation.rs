@@ -35,17 +35,26 @@ impl App {
 
     pub fn move_up(&mut self) {
         self.current_list_state().select_previous();
-        self.reload_data();
+
+        if self.navigation.view == View::Lists {
+            self.reload_data();
+        }
     }
 
     pub fn move_down(&mut self) {
         self.current_list_state().select_next();
-        self.reload_data();
+
+        if self.navigation.view == View::Lists {
+            self.reload_data();
+        }
     }
 
     pub fn go_to_first_item(&mut self) {
         self.current_list_state().select_first();
-        self.reload_data();
+
+        if self.navigation.view == View::Lists {
+            self.reload_data();
+        }
     }
 
     pub fn go_to_last_item(&mut self) {
@@ -53,7 +62,10 @@ impl App {
 
         if len > 0 {
             self.current_list_state().select(Some(len - 1));
-            self.reload_data();
+
+            if self.navigation.view == View::Lists {
+                self.reload_data();
+            }
         }
     }
 
@@ -63,7 +75,10 @@ impl App {
         if len > 0 {
             let random_index = rand::thread_rng().gen_range(0..len);
             self.current_list_state().select(Some(random_index));
-            self.reload_data();
+
+            if self.navigation.view == View::Lists {
+                self.reload_data();
+            }
         }
     }
 
