@@ -69,6 +69,7 @@ impl App {
 
     pub fn open_list(&mut self) {
         self.navigation.view = View::Items;
+        self.load_current_commands();
     }
 
     pub fn open_file(&mut self) {

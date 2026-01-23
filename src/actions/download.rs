@@ -51,7 +51,6 @@ impl App {
 
         let selected_command = &commands[self.commands.selected_command];
 
-        // Get paths for variable substitution
         let base_dir = &self.config.base_dir;
 
         let list = self.current_list_name();
@@ -78,7 +77,6 @@ impl App {
 
         let ppsspp_path = format!("'{}/programs/ppsspp'", &base_dir.to_string_lossy());
 
-        // Prepare command with variable substitution
         let mut command_str = selected_command.command.clone();
         command_str = command_str.replace("$RETROARCH", &retroarch_path);
         command_str = command_str.replace("$DUCKSTATION", &duckstation_path);
@@ -98,7 +96,6 @@ impl App {
     }
 
     fn sanitize_filename(filename: &str) -> String {
-        // Replace potentially problematic characters for file paths
         filename
             .replace('\'', "")
             .replace('\"', "")

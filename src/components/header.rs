@@ -1,13 +1,15 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, Paragraph, Tabs},
+    widgets::{Block, BorderType, Paragraph, Tabs},
 };
 
 use crate::{
     actions::{commands::Command, navigation::View},
     app::App,
+    components::inputs::search::InputMode,
 };
 
 pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
@@ -24,21 +26,9 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
         .constraints([Constraint::Percentage(15), Constraint::Min(0)])
         .split(area);
 
-    let search_block = Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Rgb(137, 180, 250)))
-        .title("Search");
+    render_input(app, frame, chunks[0]);
 
-    let search_text = app.search.search_query.clone();
-    let search_paragraph = Paragraph::new(search_text)
-        .style(Color::Rgb(180, 190, 254))
-        .block(search_block);
-
-    frame.render_widget(search_paragraph, chunks[0]);
-
-    let tabs_block = Block::default()
-        .borders(Borders::ALL)
+    let tabs_block = Block::bordered()
         .border_type(BorderType::Rounded)
         .border_style(Color::Rgb(203, 166, 247));
 
@@ -49,6 +39,29 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
         .divider("");
 
     frame.render_widget(tabs, chunks[1]);
+}
+
+fn render_input(app: &App, frame: &mut Frame, area: Rect) {
+    let width = area.width.max(3) - 3;
+    let scroll = app.ui_state.search.input.visual_scroll(width as usize);
+    let style = match app.ui_state.search.mode {
+        InputMode::Normal => Color::Rgb(137, 180, 250),
+        InputMode::Editing => Color::Rgb(180, 190, 254),
+    };
+    let input = Paragraph::new(app.ui_state.search.input.value())
+        .style(style)
+        .scroll((0, scroll as u16))
+        .block(
+            Block::bordered()
+                .title("Search")
+                .border_type(BorderType::Rounded),
+        );
+    frame.render_widget(input, area);
+
+    if app.ui_state.search.mode == InputMode::Editing {
+        let x = app.ui_state.search.input.visual_cursor().max(scroll) - scroll + 1;
+        frame.set_cursor_position((area.x + x as u16, area.y + 1))
+    }
 }
 
 fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {

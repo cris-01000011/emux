@@ -4,14 +4,15 @@ use ratatui::{
     widgets::ListState,
 };
 
+use crate::components::{body, header, inputs::search::SearchState};
+use crate::{app::App, components::footer};
+
 #[derive(Default)]
 pub struct UiState {
     pub lists: ListState,
     pub items_in_list: ListState,
+    pub search: SearchState,
 }
-
-use crate::components::{body, header};
-use crate::{app::App, components::footer};
 
 pub fn ui(frame: &mut Frame, app: &mut App) {
     let vertical = Layout::default()

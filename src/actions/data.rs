@@ -6,7 +6,7 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::{actions::navigation::View, app::App};
+use crate::{actions::navigation::View, app::App, components::inputs::search::InputMode};
 
 #[derive(Default)]
 pub struct AppData {
@@ -43,9 +43,7 @@ impl App {
 
     pub fn reload_data(&mut self) {
         if self.navigation.view == View::Items {
-            self.load_current_commands();
-
-            if self.search.in_search && !self.search.search_query.is_empty() {
+            if self.ui_state.search.mode == InputMode::Editing {
                 self.load_items();
                 self.search_items_in_list();
             } else {
@@ -55,7 +53,7 @@ impl App {
             return;
         }
 
-        if self.search.in_search && !self.search.search_query.is_empty() {
+        if self.ui_state.search.mode == InputMode::Editing {
             self.load_default_lists();
             self.search_lists();
         } else {
@@ -114,7 +112,7 @@ impl App {
     }
 
     fn search_lists(&mut self) {
-        let query = self.search.search_query.to_lowercase();
+        let query = self.ui_state.search.input.value().to_lowercase();
 
         self.data.lists.retain(|path| {
             path.file_stem()
@@ -125,7 +123,7 @@ impl App {
     }
 
     fn search_items_in_list(&mut self) {
-        let query = self.search.search_query.to_lowercase();
+        let query = self.ui_state.search.input.value().to_lowercase();
 
         self.data.items_in_list = self
             .data

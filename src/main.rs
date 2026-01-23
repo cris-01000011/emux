@@ -9,6 +9,7 @@ use ratatui::{
         terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     },
 };
+use tui_input::backend::crossterm::EventHandler;
 
 mod actions;
 mod app;
@@ -17,8 +18,8 @@ mod config;
 mod ui;
 mod utils;
 
-use crate::app::App;
 use crate::ui::ui;
+use crate::{app::App, components::inputs::search::InputMode};
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -52,22 +53,27 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             eprint!("Error at print TUI: {}", error)
         }
 
-        if let Event::Key(key) = event::read()? {
+        let event = event::read()?;
+        if let Event::Key(key) = event {
             if key.kind == KeyEventKind::Release {
                 continue;
             }
 
-            if app.search.in_search {
-                match key.code {
-                    KeyCode::Esc => app.stop_search(),
-                    KeyCode::Up => app.move_up(),
-                    KeyCode::Down => app.move_down(),
-                    KeyCode::Enter => app.stop_search(),
-                    KeyCode::Backspace => app.remove_search_char(),
-                    KeyCode::Char(char) => app.add_search_char(char),
-                    _ => {}
+            match app.ui_state.search.mode {
+                InputMode::Editing => {
+                    match key.code {
+                        KeyCode::Esc => app.stop_search(),
+                        KeyCode::Enter => app.stop_search(),
+                        KeyCode::Up => app.move_up(),
+                        KeyCode::Down => app.move_down(),
+                        _ => {
+                            app.ui_state.search.input.handle_event(&event);
+                            app.reload_data();
+                        }
+                    }
+                    continue;
                 }
-                continue;
+                InputMode::Normal => {}
             }
 
             if key.kind == KeyEventKind::Press {
@@ -80,12 +86,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Backspace => app.go_back(),
                     KeyCode::Tab => app.commands.next_command(),
                     KeyCode::BackTab => app.commands.prev_command(),
+                    KeyCode::Char('/') => app.start_search(),
                     KeyCode::Char('b') => app.open_browser_search(),
                     KeyCode::Char('F') => app.toggle_favorites_mode(),
                     KeyCode::Char('f') => app.toggle_favorite(),
                     KeyCode::Char('g') => app.go_to_first_item(),
                     KeyCode::Char('G') => app.go_to_last_item(),
-                    KeyCode::Char('s') => app.start_search(),
                     KeyCode::Char('x') => app.jump_to_random(),
                     KeyCode::Char('q') => return Ok(()),
                     _ => {}
