@@ -54,7 +54,7 @@ impl App {
             return;
         }
 
-        let selected_item_index = self.ui_state.items_in_list.selected().unwrap_or(0);
+        let selected_item_index = self.ui.items_in_list.selected().unwrap_or(0);
         let selected_item = &self.data.items_in_list[selected_item_index];
 
         let list = self.current_list_name();
@@ -81,7 +81,7 @@ impl App {
 
     pub fn toggle_favorites_mode(&mut self) {
         if !self.favorite.in_favorites {
-            self.ui_state.items_in_list.select_first();
+            self.ui.items_in_list.select_first();
         }
 
         self.favorite.in_favorites = !self.favorite.in_favorites;

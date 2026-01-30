@@ -25,7 +25,7 @@ impl App {
     pub fn init_lists(&mut self) {
         self.load_default_lists();
         self.data.lists.sort();
-        self.ui_state.lists.select_first();
+        self.ui.lists.select_first();
 
         let path = self.data.lists.first();
         if let Some(path) = path {
@@ -43,7 +43,7 @@ impl App {
 
     pub fn reload_data(&mut self) {
         if self.navigation.view == View::Items {
-            if self.ui_state.search.mode == InputMode::Editing {
+            if self.ui.search.mode == InputMode::Editing {
                 self.load_items();
                 self.search_items_in_list();
             } else {
@@ -53,7 +53,7 @@ impl App {
             return;
         }
 
-        if self.ui_state.search.mode == InputMode::Editing {
+        if self.ui.search.mode == InputMode::Editing {
             self.load_default_lists();
             self.search_lists();
         } else {
@@ -78,14 +78,14 @@ impl App {
         let selected_path = self
             .data
             .lists
-            .get(self.ui_state.lists.selected().unwrap_or_default())
+            .get(self.ui.lists.selected().unwrap_or_default())
             .cloned();
 
         self.load_default_lists();
 
         if let Some(path) = selected_path {
             if let Some(new_index) = self.data.lists.iter().position(|p| p == &path) {
-                self.ui_state.lists.select(Some(new_index));
+                self.ui.lists.select(Some(new_index));
             }
         }
     }
@@ -94,7 +94,7 @@ impl App {
         let selected_item = self
             .data
             .items_in_list
-            .get(self.ui_state.items_in_list.selected().unwrap_or(0))
+            .get(self.ui.items_in_list.selected().unwrap_or(0))
             .cloned();
 
         self.load_items();
@@ -106,13 +106,13 @@ impl App {
                 .iter()
                 .position(|x| x.item == item.item)
             {
-                self.ui_state.items_in_list.select(Some(new_index));
+                self.ui.items_in_list.select(Some(new_index));
             }
         }
     }
 
     fn search_lists(&mut self) {
-        let query = self.ui_state.search.input.value().to_lowercase();
+        let query = self.ui.search.input.value().to_lowercase();
 
         self.data.lists.retain(|path| {
             path.file_stem()
@@ -123,7 +123,7 @@ impl App {
     }
 
     fn search_items_in_list(&mut self) {
-        let query = self.ui_state.search.input.value().to_lowercase();
+        let query = self.ui.search.input.value().to_lowercase();
 
         self.data.items_in_list = self
             .data
@@ -159,7 +159,7 @@ impl App {
     }
 
     fn selected_json_path(&self) -> Option<PathBuf> {
-        let selected = self.ui_state.lists.selected().unwrap_or_default();
+        let selected = self.ui.lists.selected().unwrap_or_default();
         let path = self.data.lists.get(selected)?.clone();
 
         if path.extension().and_then(|s| s.to_str()) == Some("json") {
@@ -178,7 +178,7 @@ impl App {
 
     pub fn save_item_selected(&mut self) {
         if let Some(path) = &self.navigation.current_list_path {
-            if let Some(selected) = self.ui_state.items_in_list.selected() {
+            if let Some(selected) = self.ui.items_in_list.selected() {
                 self.data
                     .items_in_list_selections
                     .insert(path.to_path_buf(), selected);
@@ -188,7 +188,7 @@ impl App {
 
     fn restore_item_selected(&mut self) {
         if self.favorite.in_favorites {
-            self.ui_state.items_in_list.select(Some(0));
+            self.ui.items_in_list.select(Some(0));
             return;
         }
 
@@ -203,6 +203,6 @@ impl App {
             .copied()
             .unwrap_or_default();
 
-        self.ui_state.items_in_list.select(Some(restored));
+        self.ui.items_in_list.select(Some(restored));
     }
 }

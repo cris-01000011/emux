@@ -8,8 +8,7 @@ impl App {
             return;
         }
 
-        let selected_rom =
-            &self.data.items_in_list[self.ui_state.items_in_list.selected().unwrap_or(0)];
+        let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
 
         let list = self.current_list_name();
         let clean_title = clean_all(&selected_rom.item);

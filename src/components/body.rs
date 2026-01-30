@@ -115,7 +115,7 @@ fn render_directory_list(
         .highlight_style(styles.selected)
         .highlight_spacing(HighlightSpacing::Always);
 
-    frame.render_stateful_widget(list, area, &mut app.ui_state.lists);
+    frame.render_stateful_widget(list, area, &mut app.ui.lists);
 }
 
 fn render_items_list(
@@ -162,7 +162,7 @@ fn render_items_list(
         list = list.highlight_style(styles.selected);
     }
 
-    frame.render_stateful_widget(list, area, &mut app.ui_state.items_in_list);
+    frame.render_stateful_widget(list, area, &mut app.ui.items_in_list);
 }
 
 fn extract_display_name(path: &std::path::Path) -> String {

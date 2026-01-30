@@ -1,53 +1,160 @@
-use std::{fs, process::Command};
+use std::{fs, path::PathBuf, process::Command};
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::{io::AsyncWriteExt, sync::mpsc};
+use tokio_stream::StreamExt;
 
+use crate::components::popup::ActivePopup;
 use crate::{actions::navigation::View, app::App};
 
-impl App {
-    pub fn download_rom(&self) -> Result<(), Box<dyn std::error::Error>> {
-        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
-            return Ok(());
+pub enum DownloadEvent {
+    Progress {
+        percent: f64,
+        downloaded: u64,
+        total: u64,
+    },
+    Finished,
+    Error,
+}
+
+#[derive(Default)]
+pub struct Download {
+    pub rx: Option<UnboundedReceiver<DownloadEvent>>,
+    pub progress: f64,
+    pub downloaded: u64,
+    pub total: u64,
+}
+
+async fn download_file_async(
+    url: String,
+    destination: PathBuf,
+    tx: UnboundedSender<DownloadEvent>,
+) {
+    let client = reqwest::Client::new();
+
+    let response = match client.get(&url).send().await {
+        Ok(r) => r,
+        Err(_) => {
+            let _ = tx.send(DownloadEvent::Error);
+            return;
+        }
+    };
+
+    let total_size = response.content_length();
+    let mut downloaded: u64 = 0;
+    let mut last_progress_update: u64 = 0;
+    const PROGRESS_UPDATE_INTERVAL: u64 = 1024 * 1024; // Update every 1MB
+
+    let mut file = match tokio::fs::File::create(&destination).await {
+        Ok(f) => f,
+        Err(_) => {
+            let _ = tx.send(DownloadEvent::Error);
+            return;
+        }
+    };
+
+    let mut stream = response.bytes_stream();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = match chunk {
+            Ok(c) => c,
+            Err(_) => {
+                let _ = tx.send(DownloadEvent::Error);
+                return;
+            }
+        };
+
+        if file.write_all(&chunk).await.is_err() {
+            let _ = tx.send(DownloadEvent::Error);
+            return;
         }
 
-        let selected_rom =
-            &self.data.items_in_list[self.ui_state.items_in_list.selected().unwrap_or(0)];
+        downloaded += chunk.len() as u64;
+
+        // Only send progress updates at intervals to avoid overwhelming the channel
+        if downloaded >= last_progress_update + PROGRESS_UPDATE_INTERVAL {
+            let percent = match total_size {
+                Some(total) if total > 0 => (downloaded as f64 / total as f64).clamp(0.0, 1.0),
+                _ => 0.0,
+            };
+
+            let _ = tx.send(DownloadEvent::Progress {
+                percent,
+                downloaded,
+                total: total_size.unwrap_or(0),
+            });
+            last_progress_update = downloaded;
+        }
+    }
+
+    // Send final progress update to ensure 100% is displayed
+    let percent = match total_size {
+        Some(total) if total > 0 => (downloaded as f64 / total as f64).clamp(0.0, 1.0),
+        _ => 1.0,
+    };
+
+    let _ = tx.send(DownloadEvent::Progress {
+        percent,
+        downloaded,
+        total: total_size.unwrap_or(0),
+    });
+
+    let _ = tx.send(DownloadEvent::Finished);
+}
+
+impl App {
+    pub fn download_rom(&mut self) {
+        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
+            return;
+        }
+
+        self.download.progress = 0.0;
+        self.download.downloaded = 0;
+        self.download.total = 0;
+
+        let (tx, rx) = mpsc::unbounded_channel();
+
+        self.download.rx = Some(rx);
+
+        let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
 
         let list = self.current_list_name();
         let download_dir = self.config.base_dir.join("downloads").join(list);
-        fs::create_dir_all(&download_dir)?;
+        let _ = fs::create_dir_all(&download_dir);
 
         let clean_title = Self::sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
 
-        if rom_path.exists() {
+        // Clone only what the async task needs
+        let url = selected_rom.url.clone();
+        let rom_path_clone = rom_path.clone();
+
+        if rom_path_clone.exists() {
             return self.execute_command();
         }
 
-        let client = reqwest::blocking::Client::builder()
-            .no_gzip()
-            .no_brotli()
-            .build()?;
+        self.ui.popup.open(ActivePopup::Downloading);
 
-        let mut response = client.get(&selected_rom.url).send()?;
-        let mut file = fs::File::create(&rom_path)?;
-
-        std::io::copy(&mut response, &mut file)?;
-
-        self.execute_command()
+        tokio::spawn(async move { download_file_async(url, rom_path_clone, tx).await });
     }
 
-    pub fn execute_command(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn execute_command(&mut self) {
         if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
-            return Ok(());
+            return;
         }
 
         let commands = self.commands.get_current_commands();
 
         if commands.is_empty() {
-            return Ok(());
+            return;
         }
 
-        let selected_rom =
-            &self.data.items_in_list[self.ui_state.items_in_list.selected().unwrap_or(0)];
+        if matches!(self.ui.popup.active, ActivePopup::Downloading)
+            && self.download.progress < 100.0
+        {
+            return;
+        }
+
+        let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
 
         let selected_command = &commands[self.commands.selected_command];
 
@@ -89,10 +196,10 @@ impl App {
         {
             let mut cmd = Command::new("sh");
             cmd.arg("-c").arg(&command_str);
-            cmd.spawn()?;
+            let _ = cmd.spawn();
         }
 
-        Ok(())
+        self.ui.popup.close();
     }
 
     fn sanitize_filename(filename: &str) -> String {

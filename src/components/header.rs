@@ -43,12 +43,12 @@ pub fn render_header(frame: &mut ratatui::Frame, app: &App, area: Rect) {
 
 fn render_input(app: &App, frame: &mut Frame, area: Rect) {
     let width = area.width.max(3) - 3;
-    let scroll = app.ui_state.search.input.visual_scroll(width as usize);
-    let style = match app.ui_state.search.mode {
+    let scroll = app.ui.search.input.visual_scroll(width as usize);
+    let style = match app.ui.search.mode {
         InputMode::Normal => Color::Rgb(137, 180, 250),
         InputMode::Editing => Color::Rgb(180, 190, 254),
     };
-    let input = Paragraph::new(app.ui_state.search.input.value())
+    let input = Paragraph::new(app.ui.search.input.value())
         .style(style)
         .scroll((0, scroll as u16))
         .block(
@@ -58,8 +58,8 @@ fn render_input(app: &App, frame: &mut Frame, area: Rect) {
         );
     frame.render_widget(input, area);
 
-    if app.ui_state.search.mode == InputMode::Editing {
-        let x = app.ui_state.search.input.visual_cursor().max(scroll) - scroll + 1;
+    if app.ui.search.mode == InputMode::Editing {
+        let x = app.ui.search.input.visual_cursor().max(scroll) - scroll + 1;
         frame.set_cursor_position((area.x + x as u16, area.y + 1))
     }
 }

@@ -21,8 +21,8 @@ pub struct Navigation {
 impl App {
     fn current_list_state(&mut self) -> &mut ListState {
         match self.navigation.view {
-            View::Lists => &mut self.ui_state.lists,
-            View::Items => &mut self.ui_state.items_in_list,
+            View::Lists => &mut self.ui.lists,
+            View::Items => &mut self.ui.items_in_list,
         }
     }
 
@@ -89,12 +89,11 @@ impl App {
 
     pub fn open_file(&mut self) {
         if self.navigation.view == View::Lists {
-            return self.open_list();
+            self.open_list();
+            return;
         }
 
-        if let Err(e) = self.download_rom() {
-            eprintln!("error downloading item: {}", e);
-        }
+        self.download_rom()
     }
 
     pub fn go_back(&mut self) {
@@ -104,7 +103,7 @@ impl App {
 
         let list = self.current_list_name();
 
-        if let Some(item_selected) = self.ui_state.items_in_list.selected() {
+        if let Some(item_selected) = self.ui.items_in_list.selected() {
             self.data
                 .items_in_list_selections
                 .insert(list.into(), item_selected);
