@@ -14,7 +14,7 @@ use crate::{
 pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let horizontal = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
+        .constraints([Constraint::Length(22), Constraint::Min(0)])
         .split(area);
 
     render_left_panel(frame, app, horizontal[0]);
@@ -24,19 +24,16 @@ pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
 fn render_left_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(1), // top margin
-            Constraint::Min(0),
-            Constraint::Length(1), // bottom margin
-        ])
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
         .split(area);
+
+    let block = Block::default().style(Style::new().bg(Color::Rgb(17, 17, 27)));
+    frame.render_widget(block, chunks[0]);
 
     let styles = LeftPanelStyles::new();
     let panel_block = Block::default().style(Style::new().bg(Color::Rgb(17, 17, 27)));
 
-    frame.render_widget(&panel_block, chunks[0]);
     render_directory_list(frame, app, chunks[1], &styles, &panel_block);
-    frame.render_widget(&panel_block, chunks[2]);
 }
 
 fn render_center_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
