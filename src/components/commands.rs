@@ -26,30 +26,26 @@ pub fn render_commands(frame: &mut ratatui::Frame, app: &App, area: Rect) {
 fn generate_tabs(app: &App) -> Line<'static> {
     let mut spans: Vec<Span> = Vec::new();
 
-    // Get the range for the current list
-    let (start, end) = app.commands.get_current_list_range();
-    let command_count = end - start;
+    if let Some(current_list) = app.commands.lists.get(app.commands.selected_list) {
+        for (i, command) in current_list.commands.iter().enumerate() {
+            let is_selected = i == app.commands.selected_command;
 
-    // Use the flat commands vector with indices
-    for i in 0..command_count {
-        let is_selected = i == app.commands.selected_command;
-        let command_index = start + i;
+            let style = if is_selected {
+                Style::default()
+                    .bg(Color::Rgb(24, 24, 37))
+                    .fg(Color::Rgb(180, 190, 254))
+            } else {
+                Style::default().fg(Color::Rgb(180, 190, 254))
+            };
 
-        let style = if is_selected {
-            Style::default()
-                .bg(Color::Rgb(24, 24, 37))
-                .fg(Color::Rgb(180, 190, 254))
-        } else {
-            Style::default().fg(Color::Rgb(180, 190, 254))
-        };
+            let text = if is_selected {
+                format!(" {} ", command.name.clone())
+            } else {
+                format!("  {}  ", i + 1)
+            };
 
-        let text = if is_selected {
-            format!(" {} ", app.commands.commands[command_index].name.clone())
-        } else {
-            format!("  {}  ", i + 1)
-        };
-
-        spans.push(Span::styled(text, style));
+            spans.push(Span::styled(text, style));
+        }
     }
 
     Line::from(spans)

@@ -142,8 +142,7 @@ impl App {
             return;
         }
 
-        let (start, end) = self.commands.get_current_list_range();
-        let command_count = end - start;
+        let command_count = self.commands.get_current_list_len();
 
         if command_count == 0 {
             return;
@@ -157,7 +156,8 @@ impl App {
 
         let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
 
-        let selected_command = &self.commands.commands[start + self.commands.selected_command];
+        let selected_command = &self.commands.lists[self.commands.selected_list].commands
+            [self.commands.selected_command];
 
         let base_dir = &self.config.base_dir;
 
