@@ -5,12 +5,10 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 
-use crate::{actions::commands::Command, app::App};
+use crate::app::App;
 
 pub fn render_commands(frame: &mut ratatui::Frame, app: &App, area: Rect) {
-    let commands = app.commands.get_current_commands();
-
-    let line = generate_tabs(app, commands.to_vec());
+    let line = generate_tabs(app);
 
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -25,12 +23,17 @@ pub fn render_commands(frame: &mut ratatui::Frame, app: &App, area: Rect) {
     frame.render_widget(tabs, chunks[0]);
 }
 
-fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {
+fn generate_tabs(app: &App) -> Line<'static> {
     let mut spans: Vec<Span> = Vec::new();
 
-    // Use cached approach - get the range and iterate directly
-    for i in 0..commands.len() {
+    // Get the range for the current list
+    let (start, end) = app.commands.get_current_list_range();
+    let command_count = end - start;
+
+    // Use the flat commands vector with indices
+    for i in 0..command_count {
         let is_selected = i == app.commands.selected_command;
+        let command_index = start + i;
 
         let style = if is_selected {
             Style::default()
@@ -41,7 +44,7 @@ fn generate_tabs(app: &App, commands: Vec<Command>) -> Line<'static> {
         };
 
         let text = if is_selected {
-            format!(" {} ", commands[i].name.clone())
+            format!(" {} ", app.commands.commands[command_index].name.clone())
         } else {
             format!("  {}  ", i + 1)
         };

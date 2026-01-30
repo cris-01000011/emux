@@ -9,7 +9,7 @@ use ratatui::{
 use crate::{app::App, components::popup::Popup};
 
 pub fn render_popup(frame: &mut ratatui::Frame, app: &App, area: Rect) {
-    let area = Popup::popup_area(area, 30, 16);
+    let area = Popup::popup_area(area, 40, 6);
     frame.render_widget(Clear, area);
     frame.render_widget(
         Block::default().style(Style::new().bg(Color::Rgb(30, 30, 46))),
@@ -17,7 +17,6 @@ pub fn render_popup(frame: &mut ratatui::Frame, app: &App, area: Rect) {
     );
 
     let chunks = Layout::vertical([
-        Constraint::Length(1),
         Constraint::Length(1),
         Constraint::Length(1),
         Constraint::Length(1),

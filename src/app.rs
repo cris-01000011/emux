@@ -35,7 +35,7 @@ pub struct App {
 }
 
 impl App {
-    const FRAMES_PER_SECOND: f32 = 60.0;
+    const FRAMES_PER_SECOND: f32 = 20.0;
 
     pub fn new() -> App {
         let mut app = App {
