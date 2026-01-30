@@ -4,7 +4,7 @@ use ratatui::{
     widgets::ListState,
 };
 
-use crate::components::{body, header, inputs::search::SearchState, popup::Popup};
+use crate::components::{body, inputs::search::SearchState, popup::Popup};
 use crate::{app::App, components::footer};
 
 #[derive(Default)]
@@ -28,7 +28,6 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
     let list_area = vertical[1];
 
     body::render_body(frame, app, list_area);
-    header::render_header(frame, app, vertical[0]);
     footer::render_footer(frame, app, vertical[2]);
     app.ui.popup.render_popup(frame, app);
 }

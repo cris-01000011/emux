@@ -5,7 +5,11 @@ use ratatui::{
     widgets::{Block, HighlightSpacing, List, ListItem},
 };
 
-use crate::{actions::navigation::View, app::App, components::header::render_header};
+use crate::{
+    actions::navigation::View,
+    app::App,
+    components::{commands::render_commands, inputs::search::render_input},
+};
 
 pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let horizontal = Layout::default()
@@ -32,19 +36,25 @@ fn render_left_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
 
     frame.render_widget(&panel_block, chunks[0]);
     render_directory_list(frame, app, chunks[1], &styles, &panel_block);
+    frame.render_widget(&panel_block, chunks[2]);
 }
 
 fn render_center_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(1), Constraint::Min(0)])
+        .constraints([
+            Constraint::Length(1),
+            Constraint::Min(0),
+            Constraint::Length(1),
+        ])
         .split(area);
 
     let styles = CenterPanelStyles::new();
     let panel_block = Block::default().style(Style::new().bg(Color::Rgb(24, 24, 37)));
 
-    render_header(frame, app, chunks[0]);
+    render_commands(frame, app, chunks[0]);
     render_items_list(frame, app, chunks[1], &styles, &panel_block);
+    render_input(app, frame, chunks[2]);
 }
 
 struct LeftPanelStyles {

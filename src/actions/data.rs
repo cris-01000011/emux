@@ -64,6 +64,7 @@ impl App {
             self.load_list(&path);
         }
 
+        // Only reload commands when switching lists, not on every navigation
         self.load_current_commands();
     }
 
