@@ -86,7 +86,7 @@ fn render_progress_text(app: &App, frame: &mut Frame, area: Rect) {
 
 fn render_button(app: &App, frame: &mut Frame, area: Rect) {
     let bg = match app.download.progress < 100.0 {
-        true => Color::Rgb(147, 153, 178),
+        true => Color::Rgb(180, 190, 254),
         false => Color::Rgb(137, 180, 250),
     };
 

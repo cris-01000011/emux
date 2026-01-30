@@ -63,6 +63,8 @@ impl App {
         if let Some(path) = self.selected_json_path() {
             self.load_list(&path);
         }
+
+        self.load_current_commands();
     }
 
     pub fn current_list_name(&self) -> &str {

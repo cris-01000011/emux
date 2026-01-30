@@ -105,8 +105,8 @@ impl App {
                 match key.code {
                     KeyCode::Esc => self.ui.popup.close(),
                     KeyCode::Enter => self.execute_command(),
-                    KeyCode::Tab => self.commands.next_command(),
-                    KeyCode::BackTab => self.commands.prev_command(),
+                    KeyCode::Tab => self.next_command(),
+                    KeyCode::BackTab => self.prev_command(),
                     _ => {}
                 }
                 return;
@@ -137,8 +137,8 @@ impl App {
                     KeyCode::Left => self.go_back(),
                     KeyCode::Enter => self.open_file(),
                     KeyCode::Backspace => self.go_back(),
-                    KeyCode::Tab => self.commands.next_command(),
-                    KeyCode::BackTab => self.commands.prev_command(),
+                    KeyCode::Tab => self.next_command(),
+                    KeyCode::BackTab => self.prev_command(),
                     KeyCode::Char('/') => self.start_search(),
                     KeyCode::Char('b') => self.open_browser_search(),
                     KeyCode::Char('F') => self.toggle_favorites_mode(),

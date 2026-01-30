@@ -19,9 +19,9 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
     let vertical = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),
+            Constraint::Length(0),
             Constraint::Min(0),
-            Constraint::Max(7),
+            Constraint::Max(0),
         ])
         .split(frame.area());
 

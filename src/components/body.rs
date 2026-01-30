@@ -2,43 +2,49 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, BorderType, Borders, HighlightSpacing, List, ListItem},
+    widgets::{Block, HighlightSpacing, List, ListItem},
 };
 
-use crate::{actions::navigation::View, app::App};
+use crate::{actions::navigation::View, app::App, components::header::render_header};
 
 pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let horizontal = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(15),
-            Constraint::Percentage(65),
-            Constraint::Percentage(20),
-        ])
+        .constraints([Constraint::Percentage(15), Constraint::Percentage(85)])
         .split(area);
 
     render_left_panel(frame, app, horizontal[0]);
     render_center_panel(frame, app, horizontal[1]);
-    render_right_panel(frame, app, horizontal[2]);
 }
 
 fn render_left_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
-    let styles = LeftPanelStyles::new();
-    let panel_block = create_panel_block();
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1), // top margin
+            Constraint::Min(0),
+            Constraint::Length(1), // bottom margin
+        ])
+        .split(area);
 
-    render_directory_list(frame, app, area, &styles, &panel_block);
+    let styles = LeftPanelStyles::new();
+    let panel_block = Block::default().style(Style::new().bg(Color::Rgb(17, 17, 27)));
+
+    frame.render_widget(&panel_block, chunks[0]);
+    render_directory_list(frame, app, chunks[1], &styles, &panel_block);
 }
 
 fn render_center_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
+        .split(area);
+
     let styles = CenterPanelStyles::new();
-    let panel_block = create_panel_block();
+    let panel_block = Block::default().style(Style::new().bg(Color::Rgb(24, 24, 37)));
 
-    render_items_list(frame, app, area, &styles, &panel_block);
-}
-
-fn render_right_panel(frame: &mut ratatui::Frame, _app: &App, area: Rect) {
-    let panel_block = create_panel_block();
-    frame.render_widget(panel_block, area);
+    render_header(frame, app, chunks[0]);
+    render_items_list(frame, app, chunks[1], &styles, &panel_block);
 }
 
 struct LeftPanelStyles {
@@ -68,24 +74,17 @@ struct CenterPanelStyles {
 impl CenterPanelStyles {
     fn new() -> Self {
         Self {
-            normal: Style::default().fg(Color::Rgb(148, 226, 213)),
+            normal: Style::default().fg(Color::Rgb(180, 190, 254)),
             selected: Style::default()
                 .fg(Color::Black)
-                .bg(Color::Rgb(148, 226, 213)),
+                .bg(Color::Rgb(180, 190, 254)),
             favorite: Style::default().fg(Color::Rgb(245, 194, 231)),
             _favorite_selected: Style::default()
                 .fg(Color::Black)
                 .bg(Color::Rgb(245, 194, 231)),
-            icon: Style::default().fg(Color::Rgb(249, 226, 175)),
+            icon: Style::default().fg(Color::Rgb(180, 190, 254)),
         }
     }
-}
-
-fn create_panel_block() -> Block<'static> {
-    Block::default()
-        .borders(Borders::ALL)
-        .border_type(BorderType::Rounded)
-        .border_style(Color::Rgb(137, 180, 250))
 }
 
 fn render_directory_list(
@@ -103,7 +102,7 @@ fn render_directory_list(
         .map(|(_index, path)| {
             let name = extract_display_name(path);
             ListItem::new(Line::from(vec![
-                Span::styled(" ", styles.normal),
+                Span::styled("  ", styles.normal),
                 Span::styled(name, styles.normal),
             ]))
         })
@@ -136,9 +135,9 @@ fn render_items_list(
             let in_list = app.navigation.view == View::Items;
 
             let (icon, icon_style) = if is_favorite {
-                ("󰋑 ", styles.favorite)
+                (" 󰋑 ", styles.favorite)
             } else {
-                (" ", styles.icon)
+                ("  ", styles.icon)
             };
 
             let text_style = match (in_list, is_favorite) {
