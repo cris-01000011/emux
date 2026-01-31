@@ -6,7 +6,7 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::{actions::navigation::View, app::App};
+use crate::{actions::navigation::View, app::App, components::input::InputActive};
 
 #[derive(Default)]
 pub struct AppData {
@@ -65,12 +65,12 @@ impl App {
         // Simply update the current list reference, no data reloading
         if self.navigation.view == View::Lists {
             // When in Lists view, check if we're in search mode
-            if self.ui.search.mode == crate::components::inputs::search::InputMode::Editing
-                && !self.ui.search.input.value().is_empty()
+            if self.ui.input.active == InputActive::Search
+                && !self.ui.input.search.value().is_empty()
             {
                 // Use the real list index from search results
                 if let Some(selected_index) = self.ui.lists.selected() {
-                    if let Some(&real_list_index) = self.ui.search.lists_query.get(selected_index) {
+                    if let Some(&real_list_index) = self.search.lists_query.get(selected_index) {
                         if let Some(path) = self.data.lists.get(real_list_index) {
                             self.navigation.current_list_path = Some(path.clone());
                         }
@@ -124,26 +124,26 @@ impl App {
 
     // Search methods that populate SearchState queries
     pub fn search_lists(&mut self) {
-        let query = self.ui.search.input.value().to_lowercase();
-        self.ui.search.lists_query.clear();
+        let query = self.ui.input.search.value().to_lowercase();
+        self.search.lists_query.clear();
 
         for (index, path) in self.data.lists.iter().enumerate() {
             if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
                 if name.to_lowercase().contains(&query) {
-                    self.ui.search.lists_query.push(index);
+                    self.search.lists_query.push(index);
                 }
             }
         }
     }
 
     pub fn search_items(&mut self) {
-        let query = self.ui.search.input.value().to_lowercase();
-        self.ui.search.items_query.clear();
+        let query = self.ui.input.search.value().to_lowercase();
+        self.search.items_query.clear();
 
         let items = self.get_current_list_items();
         for (index, item) in items.iter().enumerate() {
             if item.item.to_lowercase().contains(&query) {
-                self.ui.search.items_query.push(index);
+                self.search.items_query.push(index);
             }
         }
     }

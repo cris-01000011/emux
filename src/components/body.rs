@@ -8,7 +8,7 @@ use ratatui::{
 use crate::{
     actions::navigation::View,
     app::App,
-    components::{commands::render_commands, inputs::search::render_input},
+    components::{commands::render_commands, input::InputActive, inputs::search::render_input},
 };
 
 pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
@@ -101,14 +101,12 @@ fn render_directory_list(
     styles: &LeftPanelStyles,
     block: &Block<'static>,
 ) {
-    let items: Vec<ListItem> = if app.ui.search.mode
-        == crate::components::inputs::search::InputMode::Editing
-        && !app.ui.search.input.value().is_empty()
+    let items: Vec<ListItem> = if app.ui.input.active == InputActive::Search
+        && !app.ui.input.search.value().is_empty()
         && app.navigation.view == View::Lists
     {
         // Show search results only when searching in Lists
-        app.ui
-            .search
+        app.search
             .lists_query
             .iter()
             .map(|&index| {
@@ -153,14 +151,12 @@ fn render_items_list(
     block: &Block<'static>,
 ) {
     let items = app.get_current_list_items();
-    let items_display: Vec<ListItem> = if app.ui.search.mode
-        == crate::components::inputs::search::InputMode::Editing
-        && !app.ui.search.input.value().is_empty()
+    let items_display: Vec<ListItem> = if app.ui.input.active == InputActive::Search
+        && !app.ui.input.search.value().is_empty()
         && app.navigation.view == View::Items
     {
         // Show search results only when searching in Items
-        app.ui
-            .search
+        app.search
             .items_query
             .iter()
             .map(|&index| {

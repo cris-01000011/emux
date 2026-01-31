@@ -12,8 +12,9 @@ use crate::{
         download::{Download, DownloadEvent},
         favorite::Favorite,
         navigation::Navigation,
+        search::Search,
     },
-    components::{inputs::search::InputMode, popup::ActivePopup},
+    components::{input::InputActive, popup::ActivePopup},
     config::app::AppConfig,
     ui::{UiState, render_ui},
 };
@@ -30,6 +31,7 @@ pub struct App {
     pub download: Download,
     pub favorite: Favorite,
     pub navigation: Navigation,
+    pub search: Search,
     pub state: AppState,
     pub ui: UiState,
 }
@@ -45,6 +47,7 @@ impl App {
             download: Default::default(),
             favorite: Default::default(),
             navigation: Default::default(),
+            search: Default::default(),
             state: Default::default(),
             ui: Default::default(),
         };
@@ -112,21 +115,43 @@ impl App {
                 return;
             }
 
-            match self.ui.search.mode {
-                InputMode::Editing => {
-                    match key.code {
+            if self.ui.input.active != InputActive::None {
+                match self.ui.input.active {
+                    InputActive::Search => match key.code {
                         KeyCode::Esc => self.stop_search(),
                         KeyCode::Enter => self.stop_search(),
                         KeyCode::Up => self.move_up(),
                         KeyCode::Down => self.move_down(),
                         _ => {
-                            self.ui.search.input.handle_event(&event);
+                            self.ui.input.search.handle_event(&event);
                             self.update_search();
                         }
-                    }
-                    return;
+                    },
+                    InputActive::NewListName => match key.code {
+                        KeyCode::Esc => self.ui.close_new_list_popup(),
+                        KeyCode::Enter => self.ui.close_new_list_popup(),
+                        KeyCode::Tab | KeyCode::BackTab => {
+                            self.ui.input.active = InputActive::NewListUrl
+                        }
+                        _ => {
+                            self.ui.input.new_list_name.handle_event(&event);
+                        }
+                    },
+                    InputActive::NewListUrl => match key.code {
+                        KeyCode::Esc => self.ui.close_new_list_popup(),
+                        KeyCode::Enter => self.ui.close_new_list_popup(),
+                        KeyCode::Tab | KeyCode::BackTab => {
+                            self.ui.input.active = InputActive::NewListName
+                        }
+                        _ => {
+                            self.ui.input.new_list_url.handle_event(&event);
+                        }
+                    },
+
+                    _ => {}
                 }
-                InputMode::Normal => {}
+
+                return;
             }
 
             if key.kind == KeyEventKind::Press {
@@ -145,6 +170,10 @@ impl App {
                     KeyCode::Char('f') => self.toggle_favorite(),
                     KeyCode::Char('g') => self.go_to_first_item(),
                     KeyCode::Char('G') => self.go_to_last_item(),
+                    KeyCode::Char('n') => {
+                        self.ui.popup.open(ActivePopup::NewList);
+                        self.ui.input.active = InputActive::NewListName;
+                    }
                     KeyCode::Char('x') => self.jump_to_random(),
                     KeyCode::Char('q') => self.state.should_quit = true,
                     _ => {}
