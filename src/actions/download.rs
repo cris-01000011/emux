@@ -103,7 +103,7 @@ async fn download_file_async(
 
 impl App {
     pub fn download_rom(&mut self) {
-        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.get_current_list_items_count() == 0 {
             return;
         }
 
@@ -115,7 +115,8 @@ impl App {
 
         self.download.rx = Some(rx);
 
-        let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
+        let current_items = self.get_current_list_items();
+        let selected_rom = &current_items[self.ui.items_in_list.selected().unwrap_or(0)];
 
         let list = self.current_list_name();
         let download_dir = self.config.base_dir.join("downloads").join(list);
@@ -138,7 +139,7 @@ impl App {
     }
 
     pub fn execute_command(&mut self) {
-        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.get_current_list_items_count() == 0 {
             return;
         }
 
@@ -154,7 +155,8 @@ impl App {
             return;
         }
 
-        let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
+        let current_items = self.get_current_list_items();
+        let selected_rom = &current_items[self.ui.items_in_list.selected().unwrap_or(0)];
 
         let selected_command = &self.commands.lists[self.commands.selected_list].commands
             [self.commands.selected_command];

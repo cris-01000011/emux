@@ -19,6 +19,12 @@ pub enum InputMode {
 pub struct SearchState {
     pub input: Input,
     pub mode: InputMode,
+    // Search results for different contexts
+    pub lists_query: Vec<usize>, // Indices of matching lists
+    pub items_query: Vec<usize>, // Indices of matching items
+    // Remember selected positions to restore after search
+    pub saved_list_selection: Option<usize>,
+    pub saved_item_selection: Option<usize>,
 }
 
 pub fn render_input(app: &App, frame: &mut Frame, area: Rect) {
@@ -64,6 +70,10 @@ pub fn render_input(app: &App, frame: &mut Frame, area: Rect) {
 impl SearchState {
     pub fn clear(&mut self) {
         self.input.reset();
+        self.lists_query.clear();
+        self.items_query.clear();
+        self.saved_list_selection = None;
+        self.saved_item_selection = None;
     }
 }
 
@@ -72,14 +82,67 @@ impl App {
         self.ui.search.mode = InputMode::Editing;
 
         match self.navigation.view {
-            View::Lists => self.ui.lists.select_first(),
-            View::Items => self.ui.items_in_list.select_first(),
+            View::Lists => {
+                self.ui.search.saved_list_selection = self.ui.lists.selected();
+            }
+            View::Items => {
+                self.ui.search.saved_item_selection = self.ui.items_in_list.selected();
+            }
+        }
+
+        match self.navigation.view {
+            View::Lists => {
+                self.search_lists();
+                self.ui.lists.select_first();
+            }
+            View::Items => {
+                self.search_items();
+                self.ui.items_in_list.select_first();
+            }
         };
     }
 
     pub fn stop_search(&mut self) {
         self.ui.search.mode = InputMode::Normal;
-        self.ui.search.clear();
-        self.reload_data();
+
+        self.restore_selection();
+    }
+
+    fn restore_selection(&mut self) {
+        match self.navigation.view {
+            View::Lists => {
+                if let Some(saved) = self.ui.search.saved_list_selection {
+                    self.ui.search.clear();
+                    self.ui.lists.select(Some(saved));
+                    self.reload_data();
+                }
+            }
+            View::Items => {
+                if let Some(saved) = self.ui.search.saved_item_selection {
+                    self.ui.search.clear();
+                    self.reload_data();
+                    self.ui.items_in_list.select(Some(saved));
+                }
+            }
+        }
+    }
+
+    pub fn update_search(&mut self) {
+        if self.ui.search.mode == InputMode::Editing {
+            match self.navigation.view {
+                View::Lists => {
+                    self.search_lists();
+                    self.ui.lists.select_first();
+                    self.ui.items_in_list.select_first();
+                    self.update_selected_list_from_search();
+                    self.reload_data();
+                }
+                View::Items => {
+                    self.search_items();
+                    self.ui.items_in_list.select_first();
+                    self.update_selected_list_from_search();
+                }
+            };
+        }
     }
 }

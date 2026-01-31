@@ -4,11 +4,12 @@ use crate::{actions::navigation::View, app::App, utils::string::clean_all};
 
 impl App {
     pub fn open_browser_search(&self) {
-        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.get_current_list_items_count() == 0 {
             return;
         }
 
-        let selected_rom = &self.data.items_in_list[self.ui.items_in_list.selected().unwrap_or(0)];
+        let current_items = self.get_current_list_items();
+        let selected_rom = &current_items[self.ui.items_in_list.selected().unwrap_or(0)];
 
         let list = self.current_list_name();
         let clean_title = clean_all(&selected_rom.item);

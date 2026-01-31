@@ -50,12 +50,13 @@ impl App {
     }
 
     pub fn toggle_favorite(&mut self) {
-        if self.navigation.view == View::Lists || self.data.items_in_list.is_empty() {
+        if self.navigation.view == View::Lists || self.get_current_list_items_count() == 0 {
             return;
         }
 
         let selected_item_index = self.ui.items_in_list.selected().unwrap_or(0);
-        let selected_item = &self.data.items_in_list[selected_item_index];
+        let current_items = self.get_current_list_items();
+        let selected_item = &current_items[selected_item_index];
 
         let list = self.current_list_name();
         let new_favorite = FavoriteEntry {
@@ -76,7 +77,6 @@ impl App {
         }
 
         self.favorite.update_favorites();
-        self.reload_data();
     }
 
     pub fn toggle_favorites_mode(&mut self) {

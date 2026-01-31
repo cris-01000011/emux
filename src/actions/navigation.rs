@@ -26,15 +26,66 @@ impl App {
         }
     }
 
+    pub fn update_selected_list_from_search(&mut self) {
+        // When searching in Lists, need to update the actual selected list
+        if self.navigation.view == View::Lists
+            && self.ui.search.mode == crate::components::inputs::search::InputMode::Editing
+            && !self.ui.search.input.value().is_empty()
+        {
+            if let Some(selected_index) = self.ui.lists.selected() {
+                if let Some(&real_list_index) = self.ui.search.lists_query.get(selected_index) {
+                    // Update the actual selected list based on search results
+                    self.commands.selected_list = real_list_index; // Update for command context
+                    // Update current list path
+                    if let Some(path) = self.data.lists.get(real_list_index) {
+                        self.navigation.current_list_path = Some(path.clone());
+                    }
+                    // Update saved selection to restore after search ends
+                    self.ui.search.saved_list_selection = Some(real_list_index);
+                }
+            }
+        }
+
+        // Also update saved selection for items when searching in Items
+        if self.navigation.view == View::Items
+            && self.ui.search.mode == crate::components::inputs::search::InputMode::Editing
+            && !self.ui.search.input.value().is_empty()
+        {
+            if let Some(selected_index) = self.ui.items_in_list.selected() {
+                if let Some(&real_item_index) = self.ui.search.items_query.get(selected_index) {
+                    self.ui.search.saved_item_selection = Some(real_item_index);
+                }
+            }
+        }
+    }
+
     fn current_list_len(&self) -> usize {
         match self.navigation.view {
-            View::Lists => self.data.lists.len(),
-            View::Items => self.data.items_in_list.len(),
+            View::Lists => {
+                if self.ui.search.mode == crate::components::inputs::search::InputMode::Editing
+                    && !self.ui.search.input.value().is_empty()
+                {
+                    self.ui.search.lists_query.len()
+                } else {
+                    self.data.lists.len()
+                }
+            }
+            View::Items => {
+                if self.ui.search.mode == crate::components::inputs::search::InputMode::Editing
+                    && !self.ui.search.input.value().is_empty()
+                {
+                    self.ui.search.items_query.len()
+                } else {
+                    self.get_current_list_items_count()
+                }
+            }
         }
     }
 
     pub fn move_up(&mut self) {
         self.current_list_state().select_previous();
+
+        self.update_selected_list_from_search();
 
         if self.navigation.view == View::Lists {
             self.reload_data();
@@ -44,6 +95,8 @@ impl App {
     pub fn move_down(&mut self) {
         self.current_list_state().select_next();
 
+        self.update_selected_list_from_search();
+
         if self.navigation.view == View::Lists {
             self.reload_data();
         }
@@ -51,6 +104,8 @@ impl App {
 
     pub fn go_to_first_item(&mut self) {
         self.current_list_state().select_first();
+
+        self.update_selected_list_from_search();
 
         if self.navigation.view == View::Lists {
             self.reload_data();
@@ -62,6 +117,8 @@ impl App {
 
         if len > 0 {
             self.current_list_state().select(Some(len - 1));
+
+            self.update_selected_list_from_search();
 
             if self.navigation.view == View::Lists {
                 self.reload_data();
@@ -75,6 +132,8 @@ impl App {
         if len > 0 {
             let random_index = rand::thread_rng().gen_range(0..len);
             self.current_list_state().select(Some(random_index));
+
+            self.update_selected_list_from_search();
 
             if self.navigation.view == View::Lists {
                 self.reload_data();

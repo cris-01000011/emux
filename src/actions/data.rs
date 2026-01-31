@@ -6,12 +6,12 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::{actions::navigation::View, app::App, components::inputs::search::InputMode};
+use crate::{actions::navigation::View, app::App};
 
 #[derive(Default)]
 pub struct AppData {
     pub lists: Vec<PathBuf>,
-    pub items_in_list: Vec<ListItem>,
+    pub all_list_items: HashMap<PathBuf, Vec<ListItem>>, // All items for each list loaded once
     pub items_in_list_selections: HashMap<PathBuf, usize>,
 }
 
@@ -24,6 +24,7 @@ pub struct ListItem {
 impl App {
     pub fn init_lists(&mut self) {
         self.load_default_lists();
+        self.load_all_list_items(); // Load all items upfront
         self.data.lists.sort();
         self.ui.lists.select_first();
 
@@ -41,30 +42,53 @@ impl App {
             .unwrap_or_default();
     }
 
-    pub fn reload_data(&mut self) {
-        if self.navigation.view == View::Items {
-            if self.ui.search.mode == InputMode::Editing {
-                self.load_items();
-                self.search_items_in_list();
-            } else {
-                self.restore_items();
+    fn load_all_list_items(&mut self) {
+        self.data.all_list_items.clear();
+
+        for list_path in &self.data.lists {
+            if let Some(data) = self.load_list_data(&list_path) {
+                self.data.all_list_items.insert(list_path.clone(), data);
             }
+        }
+    }
 
-            return;
+    fn load_list_data(&self, path: &Path) -> Option<Vec<ListItem>> {
+        if path.extension().and_then(|s| s.to_str()) != Some("json") {
+            return None;
         }
 
-        if self.ui.search.mode == InputMode::Editing {
-            self.load_default_lists();
-            self.search_lists();
+        let data = fs::read_to_string(path).ok()?;
+        serde_json::from_str::<Vec<ListItem>>(&data).ok()
+    }
+
+    pub fn reload_data(&mut self) {
+        // Simply update the current list reference, no data reloading
+        if self.navigation.view == View::Lists {
+            // When in Lists view, check if we're in search mode
+            if self.ui.search.mode == crate::components::inputs::search::InputMode::Editing
+                && !self.ui.search.input.value().is_empty()
+            {
+                // Use the real list index from search results
+                if let Some(selected_index) = self.ui.lists.selected() {
+                    if let Some(&real_list_index) = self.ui.search.lists_query.get(selected_index) {
+                        if let Some(path) = self.data.lists.get(real_list_index) {
+                            self.navigation.current_list_path = Some(path.clone());
+                        }
+                    }
+                }
+            } else {
+                // Use normal selection
+                if let Some(path) = self.selected_json_path() {
+                    self.load_list(&path);
+                }
+            }
         } else {
-            self.restore_lists();
+            // For Items view, just reload commands
+            if let Some(path) = self.selected_json_path() {
+                self.load_list(&path);
+            }
         }
 
-        if let Some(path) = self.selected_json_path() {
-            self.load_list(&path);
-        }
-
-        // Only reload commands when switching lists, not on every navigation
         self.load_current_commands();
     }
 
@@ -77,86 +101,49 @@ impl App {
             .unwrap_or("unknown")
     }
 
-    fn restore_lists(&mut self) {
-        let selected_path = self
-            .data
-            .lists
-            .get(self.ui.lists.selected().unwrap_or_default())
-            .cloned();
+    pub fn get_current_list_items(&self) -> Vec<ListItem> {
+        if let Some(path) = &self.navigation.current_list_path {
+            if let Some(items) = self.data.all_list_items.get(path) {
+                let mut result = items.clone();
 
-        self.load_default_lists();
-
-        if let Some(path) = selected_path {
-            if let Some(new_index) = self.data.lists.iter().position(|p| p == &path) {
-                self.ui.lists.select(Some(new_index));
-            }
-        }
-    }
-
-    fn restore_items(&mut self) {
-        let selected_item = self
-            .data
-            .items_in_list
-            .get(self.ui.items_in_list.selected().unwrap_or(0))
-            .cloned();
-
-        self.load_items();
-
-        if let Some(item) = selected_item {
-            if let Some(new_index) = self
-                .data
-                .items_in_list
-                .iter()
-                .position(|x| x.item == item.item)
-            {
-                self.ui.items_in_list.select(Some(new_index));
-            }
-        }
-    }
-
-    fn search_lists(&mut self) {
-        let query = self.ui.search.input.value().to_lowercase();
-
-        self.data.lists.retain(|path| {
-            path.file_stem()
-                .and_then(|s| s.to_str())
-                .map(|name| name.to_lowercase().contains(&query))
-                .unwrap_or(false)
-        });
-    }
-
-    fn search_items_in_list(&mut self) {
-        let query = self.ui.search.input.value().to_lowercase();
-
-        self.data.items_in_list = self
-            .data
-            .items_in_list
-            .iter()
-            .filter(|rom| rom.item.to_lowercase().contains(&query))
-            .cloned()
-            .collect();
-    }
-
-    fn load_items(&mut self) {
-        let Some(path) = &self.navigation.current_list_path else {
-            self.data.items_in_list.clear();
-            return;
-        };
-
-        let data = fs::read_to_string(path).unwrap_or_default();
-
-        match serde_json::from_str::<Vec<ListItem>>(&data) {
-            Ok(mut items) => {
+                // Apply favorites filter if needed
                 if self.favorite.in_favorites {
                     let list = self.current_list_name();
-                    items.retain(|item| self.favorite.is_favorite(list, &item.item));
+                    result.retain(|item| self.favorite.is_favorite(list, &item.item));
                 }
 
-                self.data.items_in_list = items;
+                return result;
             }
-            Err(e) => {
-                eprintln!("error parsing JSON for {}: {}", path.display(), e);
-                self.data.items_in_list.clear();
+        }
+        Vec::new()
+    }
+
+    pub fn get_current_list_items_count(&self) -> usize {
+        self.get_current_list_items().len()
+    }
+
+    // Search methods that populate SearchState queries
+    pub fn search_lists(&mut self) {
+        let query = self.ui.search.input.value().to_lowercase();
+        self.ui.search.lists_query.clear();
+
+        for (index, path) in self.data.lists.iter().enumerate() {
+            if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
+                if name.to_lowercase().contains(&query) {
+                    self.ui.search.lists_query.push(index);
+                }
+            }
+        }
+    }
+
+    pub fn search_items(&mut self) {
+        let query = self.ui.search.input.value().to_lowercase();
+        self.ui.search.items_query.clear();
+
+        let items = self.get_current_list_items();
+        for (index, item) in items.iter().enumerate() {
+            if item.item.to_lowercase().contains(&query) {
+                self.ui.search.items_query.push(index);
             }
         }
     }
@@ -174,9 +161,7 @@ impl App {
 
     fn load_list(&mut self, path: &Path) {
         self.navigation.current_list_path = Some(path.to_path_buf());
-
         self.restore_item_selected();
-        self.load_items();
     }
 
     pub fn save_item_selected(&mut self) {

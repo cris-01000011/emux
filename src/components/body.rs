@@ -101,19 +101,40 @@ fn render_directory_list(
     styles: &LeftPanelStyles,
     block: &Block<'static>,
 ) {
-    let items: Vec<ListItem> = app
-        .data
-        .lists
-        .iter()
-        .enumerate()
-        .map(|(_index, path)| {
-            let name = extract_display_name(path);
-            ListItem::new(Line::from(vec![
-                Span::styled("  ", styles.normal),
-                Span::styled(name, styles.normal),
-            ]))
-        })
-        .collect();
+    let items: Vec<ListItem> = if app.ui.search.mode
+        == crate::components::inputs::search::InputMode::Editing
+        && !app.ui.search.input.value().is_empty()
+        && app.navigation.view == View::Lists
+    {
+        // Show search results only when searching in Lists
+        app.ui
+            .search
+            .lists_query
+            .iter()
+            .map(|&index| {
+                let path = &app.data.lists[index];
+                let name = extract_display_name(path);
+                ListItem::new(Line::from(vec![
+                    Span::styled("  ", styles.normal),
+                    Span::styled(name, styles.normal),
+                ]))
+            })
+            .collect()
+    } else {
+        // Show all lists (normal view or when searching in Items)
+        app.data
+            .lists
+            .iter()
+            .enumerate()
+            .map(|(_index, path)| {
+                let name = extract_display_name(path);
+                ListItem::new(Line::from(vec![
+                    Span::styled("  ", styles.normal),
+                    Span::styled(name, styles.normal),
+                ]))
+            })
+            .collect()
+    };
 
     let list = List::new(items)
         .block(block.clone())
@@ -131,38 +152,72 @@ fn render_items_list(
     styles: &CenterPanelStyles,
     block: &Block<'static>,
 ) {
-    let items: Vec<ListItem> = app
-        .data
-        .items_in_list
-        .iter()
-        .enumerate()
-        .map(|(_, item)| {
-            let list = app.current_list_name();
-            let is_favorite = app.favorite.is_favorite(list, &item.item);
-            let in_list = app.navigation.view == View::Items;
+    let items = app.get_current_list_items();
+    let items_display: Vec<ListItem> = if app.ui.search.mode
+        == crate::components::inputs::search::InputMode::Editing
+        && !app.ui.search.input.value().is_empty()
+        && app.navigation.view == View::Items
+    {
+        // Show search results only when searching in Items
+        app.ui
+            .search
+            .items_query
+            .iter()
+            .map(|&index| {
+                let item = &items[index];
+                let list = app.current_list_name();
+                let is_favorite = app.favorite.is_favorite(list, &item.item);
+                let in_list = app.navigation.view == View::Items;
 
-            let (icon, icon_style) = if is_favorite {
-                (" 󰋑 ", styles.favorite)
-            } else {
-                ("  ", styles.icon)
-            };
+                let (icon, icon_style) = if is_favorite {
+                    (" 󰋑 ", styles.favorite)
+                } else {
+                    ("  ", styles.icon)
+                };
 
-            let text_style = match (in_list, is_favorite) {
-                (true, false) => styles.normal,
+                let text_style = match (in_list, is_favorite) {
+                    (true, false) => styles.normal,
+                    (_, true) => styles.favorite,
+                    _ => styles.normal,
+                };
 
-                (_, true) => styles.favorite,
+                ListItem::new(Line::from(vec![
+                    Span::styled(icon, icon_style),
+                    Span::styled(item.item.clone(), text_style),
+                ]))
+            })
+            .collect()
+    } else {
+        // Show all items (normal view or when searching in Lists)
+        items
+            .iter()
+            .enumerate()
+            .map(|(_, item)| {
+                let list = app.current_list_name();
+                let is_favorite = app.favorite.is_favorite(list, &item.item);
+                let in_list = app.navigation.view == View::Items;
 
-                _ => styles.normal,
-            };
+                let (icon, icon_style) = if is_favorite {
+                    (" 󰋑 ", styles.favorite)
+                } else {
+                    ("  ", styles.icon)
+                };
 
-            ListItem::new(Line::from(vec![
-                Span::styled(icon, icon_style),
-                Span::styled(item.item.clone(), text_style),
-            ]))
-        })
-        .collect();
+                let text_style = match (in_list, is_favorite) {
+                    (true, false) => styles.normal,
+                    (_, true) => styles.favorite,
+                    _ => styles.normal,
+                };
 
-    let mut list = List::new(items).block(block.clone());
+                ListItem::new(Line::from(vec![
+                    Span::styled(icon, icon_style),
+                    Span::styled(item.item.clone(), text_style),
+                ]))
+            })
+            .collect()
+    };
+
+    let mut list = List::new(items_display).block(block.clone());
 
     if app.navigation.view == View::Items {
         list = list.highlight_style(styles.selected);

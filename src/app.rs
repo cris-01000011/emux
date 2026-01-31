@@ -121,7 +121,7 @@ impl App {
                         KeyCode::Down => self.move_down(),
                         _ => {
                             self.ui.search.input.handle_event(&event);
-                            self.reload_data();
+                            self.update_search();
                         }
                     }
                     return;
