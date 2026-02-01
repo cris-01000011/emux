@@ -5,7 +5,7 @@ use ratatui::{
     text::{Line, Span},
 };
 
-use crate::{app::App, components::inputs::search::render_search_input};
+use crate::{actions::navigation::View, app::App, components::inputs::search::render_search_input};
 
 pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
     let chunks = Layout::default()
@@ -22,8 +22,13 @@ pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
             .fg(Color::Rgb(180, 190, 254)),
     );
 
+    let icon = match app.navigation.view {
+        View::Lists => " ",
+        View::Items => " ",
+    };
+
     let icon_size = Span::styled(
-        " ",
+        icon,
         Style::new()
             .bg(Color::Rgb(148, 226, 213))
             .fg(Color::Rgb(24, 24, 37)),
