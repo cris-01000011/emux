@@ -6,7 +6,9 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::{actions::navigation::View, app::App, components::input::InputActive};
+use crate::{
+    actions::download, actions::navigation::View, app::App, components::input::InputActive,
+};
 
 #[derive(Default)]
 pub struct AppData {
@@ -192,5 +194,49 @@ impl App {
             .unwrap_or_default();
 
         self.ui.items_in_list.select(Some(restored));
+    }
+
+    pub fn get_current_list_downloaded_size(&self) -> u64 {
+        let list_name = self.current_list_name();
+        let download_dir = self.config.base_dir.join("downloads").join(list_name);
+
+        if !download_dir.exists() {
+            return 0;
+        }
+
+        match fs::read_dir(&download_dir) {
+            Ok(entries) => entries
+                .filter_map(|entry| entry.ok())
+                .filter_map(|entry| entry.metadata().ok())
+                .filter(|metadata| metadata.is_file())
+                .map(|metadata| metadata.len())
+                .sum(),
+            Err(_) => 0,
+        }
+    }
+
+    pub fn get_current_item_downloaded_size(&self) -> u64 {
+        if self.navigation.view != crate::actions::navigation::View::Items {
+            return 0;
+        }
+
+        let current_items = self.get_current_list_items();
+        let selected_index = self.ui.items_in_list.selected().unwrap_or(0);
+
+        if selected_index >= current_items.len() {
+            return 0;
+        }
+
+        let selected_item = &current_items[selected_index];
+        let list_name = self.current_list_name();
+        let download_dir = self.config.base_dir.join("downloads").join(list_name);
+
+        let clean_filename = download::sanitize_filename(&selected_item.item);
+        let file_path = download_dir.join(&clean_filename);
+
+        match fs::metadata(&file_path) {
+            Ok(metadata) if metadata.is_file() => metadata.len(),
+            _ => 0,
+        }
     }
 }

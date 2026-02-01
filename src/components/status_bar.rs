@@ -1,8 +1,8 @@
 use ratatui::{
-    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
+    Frame,
 };
 
 use crate::{actions::navigation::View, app::App, components::inputs::search::render_search_input};
@@ -15,8 +15,25 @@ pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
 
     render_search_input(app, frame, chunks[0]);
 
+    let downloaded_size_bytes = if app.navigation.view == View::Items {
+        app.get_current_item_downloaded_size()
+    } else {
+        app.get_current_list_downloaded_size()
+    };
+
+    let downloaded_size_gb = downloaded_size_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
+    let downloaded_size_mb = downloaded_size_bytes as f64 / (1024.0 * 1024.0);
+    let downloaded_size_kb = downloaded_size_bytes as f64 / 1024.0;
+
+    let size_text = match downloaded_size_bytes {
+        bytes if bytes >= (1024 * 1024 * 1024) => format!(" {:.1} GBs ", downloaded_size_gb),
+        bytes if bytes >= (1024 * 1024) => format!(" {:.1} MBs ", downloaded_size_mb),
+        bytes if bytes >= 1024 => format!(" {:.0} KBs ", downloaded_size_kb),
+        _ => format!(" {} Bs ", downloaded_size_bytes),
+    };
+
     let label_size = Span::styled(
-        " 50 MBs ",
+        size_text,
         Style::new()
             .bg(Color::Rgb(49, 50, 68))
             .fg(Color::Rgb(180, 190, 254)),

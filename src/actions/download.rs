@@ -122,7 +122,7 @@ impl App {
         let download_dir = self.config.base_dir.join("downloads").join(list);
         let _ = fs::create_dir_all(&download_dir);
 
-        let clean_title = Self::sanitize_filename(&selected_rom.item);
+        let clean_title = sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
 
         // Clone only what the async task needs
@@ -166,7 +166,7 @@ impl App {
         let list = self.current_list_name();
         let download_dir = base_dir.join("downloads").join(list);
 
-        let clean_title = Self::sanitize_filename(&selected_rom.item);
+        let clean_title = sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
         let game_downloaded = rom_path.to_string_lossy();
 
@@ -205,17 +205,18 @@ impl App {
         self.ui.popup.close();
     }
 
-    fn sanitize_filename(filename: &str) -> String {
-        filename
-            .replace('\'', "")
-            .replace('\"', "")
-            .replace('/', "_")
-            .replace('\\', "_")
-            .replace(':', "_")
-            .replace('*', "_")
-            .replace('?', "_")
-            .replace('<', "_")
-            .replace('>', "_")
-            .replace('|', "_")
-    }
+}
+
+pub fn sanitize_filename(filename: &str) -> String {
+    filename
+        .replace('\'', "")
+        .replace('\"', "")
+        .replace('/', "_")
+        .replace('\\', "_")
+        .replace(':', "_")
+        .replace('*', "_")
+        .replace('?', "_")
+        .replace('<', "_")
+        .replace('>', "_")
+        .replace('|', "_")
 }
