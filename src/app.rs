@@ -8,6 +8,7 @@ use tui_input::backend::crossterm::EventHandler;
 use crate::{
     actions::{
         commands::CommandLists,
+        create_list::{CreateList, CreateListEvent},
         data::AppData,
         download::{Download, DownloadEvent},
         favorite::Favorite,
@@ -27,6 +28,7 @@ pub struct AppState {
 pub struct App {
     pub commands: CommandLists,
     pub config: AppConfig,
+    pub create_list: CreateList,
     pub data: AppData,
     pub download: Download,
     pub favorite: Favorite,
@@ -43,6 +45,7 @@ impl App {
         let mut app = App {
             commands: Default::default(),
             config: AppConfig::load(),
+            create_list: Default::default(),
             data: Default::default(),
             download: Default::default(),
             favorite: Default::default(),
@@ -94,6 +97,31 @@ impl App {
                     }
                 },
 
+                Some(event) = async {
+                    self.create_list
+                        .rx
+                        .as_mut()
+                        .and_then(|rx| rx.try_recv().ok())
+                } => {
+                    match event {
+                        CreateListEvent::Progress { current, total, found } => {
+                            self.create_list.current = current;
+                            self.create_list.total = total;
+                            self.create_list.found = found;
+                        }
+
+                        CreateListEvent::Finished => {
+                            self.create_list.rx = None;
+                            self.init_lists();
+                            self.ui.close_new_list_popup();
+                        }
+
+                        CreateListEvent::Error => {
+                            self.create_list.rx = None;
+                        }
+                    }
+                },
+
                 Some(Ok(event)) = events.next() => {
                     self.handle_event(&event);
                 }
@@ -129,7 +157,9 @@ impl App {
                     },
                     InputActive::NewListName => match key.code {
                         KeyCode::Esc => self.ui.close_new_list_popup(),
-                        KeyCode::Enter => self.ui.close_new_list_popup(),
+                        KeyCode::Enter => {
+                            self.create_list();
+                        }
                         KeyCode::Tab | KeyCode::BackTab => {
                             self.ui.input.active = InputActive::NewListUrl
                         }
@@ -139,7 +169,9 @@ impl App {
                     },
                     InputActive::NewListUrl => match key.code {
                         KeyCode::Esc => self.ui.close_new_list_popup(),
-                        KeyCode::Enter => self.ui.close_new_list_popup(),
+                        KeyCode::Enter => {
+                            self.create_list();
+                        }
                         KeyCode::Tab | KeyCode::BackTab => {
                             self.ui.input.active = InputActive::NewListName
                         }
