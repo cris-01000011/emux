@@ -1,4 +1,5 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
@@ -8,17 +9,23 @@ use ratatui::{
 use crate::{
     actions::navigation::View,
     app::App,
-    components::{commands::render_commands, input::InputActive, inputs::search::render_input},
+    components::{commands::render_commands, input::InputActive, status_bar::render_status_bar},
 };
 
-pub fn render_body(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
+pub fn render_body(frame: &mut Frame, app: &mut App, area: Rect) {
+    let vertical = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(0), Constraint::Length(1)])
+        .split(area);
+
     let horizontal = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Length(22), Constraint::Min(0)])
-        .split(area);
+        .split(vertical[0]);
 
     render_left_panel(frame, app, horizontal[0]);
     render_center_panel(frame, app, horizontal[1]);
+    render_status_bar(app, frame, vertical[1]);
 }
 
 fn render_left_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
@@ -39,11 +46,7 @@ fn render_left_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
 fn render_center_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(1),
-            Constraint::Min(0),
-            Constraint::Length(1),
-        ])
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
         .split(area);
 
     let styles = CenterPanelStyles::new();
@@ -51,7 +54,6 @@ fn render_center_panel(frame: &mut ratatui::Frame, app: &mut App, area: Rect) {
 
     render_commands(frame, app, chunks[0]);
     render_items_list(frame, app, chunks[1], &styles, &panel_block);
-    render_input(app, frame, chunks[2]);
 }
 
 struct LeftPanelStyles {

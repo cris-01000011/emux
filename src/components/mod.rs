@@ -5,3 +5,4 @@ pub mod input;
 pub mod inputs;
 pub mod popup;
 pub mod popups;
+pub mod status_bar;
