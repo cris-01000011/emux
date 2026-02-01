@@ -80,9 +80,7 @@ impl App {
     }
 
     pub fn toggle_favorites_mode(&mut self) {
-        if !self.favorite.in_favorites {
-            self.ui.items_in_list.select_first();
-        }
+        self.ui.items_in_list.select_first();
 
         self.favorite.in_favorites = !self.favorite.in_favorites;
         self.reload_data();

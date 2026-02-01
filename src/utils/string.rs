@@ -1,3 +1,10 @@
+pub fn extract_list_name(path: &std::path::Path) -> String {
+    path.file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("<unknown>")
+        .to_string()
+}
+
 pub fn cut_at(input: &str, delim: char) -> &str {
     input.split(delim).next().unwrap_or(input).trim()
 }
