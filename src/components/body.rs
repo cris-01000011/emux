@@ -140,6 +140,13 @@ fn render_items(
     block: Block,
 ) {
     let items = app.get_current_list_items();
+    let total = items.len();
+    let visible = area.height as usize;
+    let end = match app.ui.items_in_list.selected().unwrap_or(0) > visible {
+        true => (app.ui.items_in_list.selected().unwrap_or(0) + visible).min(total),
+        false => visible * 2,
+    };
+
     let items_display: Vec<ListItem> = if app.ui.input.active == InputActive::Search
         && !app.ui.input.search.value().is_empty()
         && app.navigation.view == View::Items
@@ -170,7 +177,7 @@ fn render_items(
             })
             .collect()
     } else {
-        items
+        items[0..end]
             .iter()
             .enumerate()
             .map(|(i, item)| {
@@ -196,7 +203,9 @@ fn render_items(
             .collect()
     };
 
-    let list = List::new(items_display).block(block);
+    let list = List::new(items_display)
+        .block(block)
+        .highlight_style(styles.selected);
 
     frame.render_stateful_widget(list, area, &mut app.ui.items_in_list);
 }
