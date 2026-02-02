@@ -151,14 +151,19 @@ fn render_items(
             .map(|(i, &index)| {
                 let item = &items[index];
                 let list = app.current_list_name();
+                let is_downloaded = app.is_downloaded(&item.item);
                 let is_favorite = app.favorite.is_favorite(list, &item.item);
                 let selected = i == app.ui.items_in_list.selected().unwrap_or_default();
 
-                let (icon, style) = match (selected, is_favorite) {
-                    (true, true) => ("  ", styles.favorite_selected),
-                    (_, true) => ("  ", styles.favorite),
-                    (true, false) => ("  ", styles.selected),
-                    (_, _) => ("  ", styles.normal),
+                let (icon, style) = match (selected, is_favorite, is_downloaded) {
+                    (true, true, false) => ("  ", styles.favorite_selected),
+                    (true, true, true) => ("  ", styles.favorite_selected),
+                    (_, true, false) => ("  ", styles.favorite),
+                    (_, true, true) => ("  ", styles.favorite),
+                    (true, false, false) => ("  ", styles.selected),
+                    (true, false, true) => ("  ", styles.selected),
+                    (_, _, true) => ("  ", styles.normal),
+                    (_, _, _) => ("  ", styles.normal),
                 };
 
                 ListItem::new(Line::from(vec![Span::raw(icon), Span::raw(&item.item)])).style(style)
@@ -171,14 +176,19 @@ fn render_items(
             .map(|(i, item)| {
                 let list = app.current_list_name();
                 let in_list = app.navigation.view == View::Items;
+                let is_downloaded = app.is_downloaded(&item.item);
                 let is_favorite = app.favorite.is_favorite(list, &item.item);
                 let selected = i == app.ui.items_in_list.selected().unwrap_or_default();
 
-                let (icon, style) = match (selected, is_favorite, in_list) {
-                    (true, true, true) => ("  ", styles.favorite_selected),
-                    (_, true, _) => ("  ", styles.favorite),
-                    (true, false, true) => ("  ", styles.selected),
-                    (_, _, _) => ("  ", styles.normal),
+                let (icon, style) = match (selected, is_favorite, in_list, is_downloaded) {
+                    (true, true, true, false) => ("  ", styles.favorite_selected),
+                    (true, true, true, true) => ("  ", styles.favorite_selected),
+                    (_, true, _, false) => ("  ", styles.favorite),
+                    (_, true, _, true) => ("  ", styles.favorite),
+                    (true, false, true, false) => ("  ", styles.selected),
+                    (true, false, true, true) => ("  ", styles.selected),
+                    (_, _, _, true) => ("  ", styles.normal),
+                    (_, _, _, _) => ("  ", styles.normal),
                 };
 
                 ListItem::new(Line::from(vec![Span::raw(icon), Span::raw(&item.item)])).style(style)

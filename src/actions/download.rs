@@ -4,6 +4,7 @@ use tokio::{io::AsyncWriteExt, sync::mpsc};
 use tokio_stream::StreamExt;
 
 use crate::components::popup::ActivePopup;
+use crate::utils::string::sanitize_filename;
 use crate::{actions::navigation::View, app::App};
 
 pub enum DownloadEvent {
@@ -204,19 +205,4 @@ impl App {
 
         self.ui.popup.close();
     }
-
-}
-
-pub fn sanitize_filename(filename: &str) -> String {
-    filename
-        .replace('\'', "")
-        .replace('\"', "")
-        .replace('/', "_")
-        .replace('\\', "_")
-        .replace(':', "_")
-        .replace('*', "_")
-        .replace('?', "_")
-        .replace('<', "_")
-        .replace('>', "_")
-        .replace('|', "_")
 }

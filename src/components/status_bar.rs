@@ -1,8 +1,8 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    Frame,
 };
 
 use crate::{actions::navigation::View, app::App, components::inputs::search::render_search_input};

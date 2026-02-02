@@ -7,13 +7,14 @@ use std::{
 use serde::Deserialize;
 
 use crate::{
-    actions::download, actions::navigation::View, app::App, components::input::InputActive,
+    actions::navigation::View, app::App, components::input::InputActive,
+    utils::string::sanitize_filename,
 };
 
 #[derive(Default)]
 pub struct AppData {
     pub lists: Vec<PathBuf>,
-    pub all_list_items: HashMap<PathBuf, Vec<ListItem>>, // All items for each list loaded once
+    pub items_in_list: HashMap<PathBuf, Vec<ListItem>>,
     pub items_in_list_selections: HashMap<PathBuf, usize>,
 }
 
@@ -26,7 +27,7 @@ pub struct ListItem {
 impl App {
     pub fn init_lists(&mut self) {
         self.load_default_lists();
-        self.load_all_list_items(); // Load all items upfront
+        self.load_all_list_items();
         self.data.lists.sort();
         self.ui.lists.select_first();
 
@@ -45,11 +46,11 @@ impl App {
     }
 
     fn load_all_list_items(&mut self) {
-        self.data.all_list_items.clear();
+        self.data.items_in_list.clear();
 
         for list_path in &self.data.lists {
             if let Some(data) = self.load_list_data(&list_path) {
-                self.data.all_list_items.insert(list_path.clone(), data);
+                self.data.items_in_list.insert(list_path.clone(), data);
             }
         }
     }
@@ -105,7 +106,7 @@ impl App {
 
     pub fn get_current_list_items(&self) -> Vec<ListItem> {
         if let Some(path) = &self.navigation.current_list_path {
-            if let Some(items) = self.data.all_list_items.get(path) {
+            if let Some(items) = self.data.items_in_list.get(path) {
                 let mut result = items.clone();
 
                 // Apply favorites filter if needed
@@ -216,27 +217,45 @@ impl App {
     }
 
     pub fn get_current_item_downloaded_size(&self) -> u64 {
-        if self.navigation.view != crate::actions::navigation::View::Items {
-            return 0;
-        }
+        let selected = self.ui.items_in_list.selected().unwrap_or_default();
 
-        let current_items = self.get_current_list_items();
-        let selected_index = self.ui.items_in_list.selected().unwrap_or(0);
+        let item_index = if self.ui.input.active == InputActive::Search {
+            match self.search.items_query.get(selected) {
+                Some(idx) => *idx,
+                None => return 0,
+            }
+        } else {
+            selected
+        };
 
-        if selected_index >= current_items.len() {
-            return 0;
-        }
+        let items = self.get_current_list_items();
+        let item = match items.get(item_index) {
+            Some(item) => item,
+            None => return 0,
+        };
 
-        let selected_item = &current_items[selected_index];
         let list_name = self.current_list_name();
         let download_dir = self.config.base_dir.join("downloads").join(list_name);
 
-        let clean_filename = download::sanitize_filename(&selected_item.item);
-        let file_path = download_dir.join(&clean_filename);
+        let clean_filename = sanitize_filename(&item.item);
+        let file_path = download_dir.join(clean_filename);
 
         match fs::metadata(&file_path) {
             Ok(metadata) if metadata.is_file() => metadata.len(),
             _ => 0,
+        }
+    }
+
+    pub fn is_downloaded(&self, item_name: &str) -> bool {
+        let list_name = self.current_list_name();
+        let download_dir = self.config.base_dir.join("downloads").join(list_name);
+
+        let clean_filename = sanitize_filename(item_name);
+        let file_path = download_dir.join(clean_filename);
+
+        match fs::metadata(file_path) {
+            Ok(metadata) => metadata.is_file(),
+            Err(_) => false,
         }
     }
 }

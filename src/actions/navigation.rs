@@ -93,7 +93,9 @@ impl App {
     }
 
     pub fn move_down(&mut self) {
-        self.current_list_state().select_next();
+        if self.current_list_state().selected().unwrap_or_default() + 1 < self.current_list_len() {
+            self.current_list_state().select_next();
+        }
 
         self.update_selected_list_from_search();
 
