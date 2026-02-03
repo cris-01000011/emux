@@ -43,7 +43,7 @@ impl App {
             && self.ui.input.active == InputActive::Search
             && !self.ui.input.search.value().is_empty()
         {
-            let selected_index = self.scroll.selected;
+            let selected_index = self.scroll.index_in_list();
             if let Some(&real_item_index) = self.search.items_query.get(selected_index) {
                 self.search.saved_item_selection = Some(real_item_index);
             }
