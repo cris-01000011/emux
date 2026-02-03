@@ -9,7 +9,7 @@ impl App {
         }
 
         let current_items = self.get_current_list_items();
-        let selected_rom = &current_items[self.ui.items_in_list.selected().unwrap_or(0)];
+        let selected_rom = &current_items[self.scroll.index_in_list()];
 
         let list = self.current_list_name();
         let clean_title = clean_all(&selected_rom.item);

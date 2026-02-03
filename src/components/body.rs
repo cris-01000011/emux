@@ -140,19 +140,33 @@ fn render_items(
     block: Block,
 ) {
     let items = app.get_current_list_items();
-    let total = items.len();
-    let visible = area.height as usize;
-    let end = match app.ui.items_in_list.selected().unwrap_or(0) > visible {
-        true => (app.ui.items_in_list.selected().unwrap_or(0) + visible).min(total),
-        false => visible * 2,
+
+    let total = if app.ui.input.active == InputActive::Search
+        && !app.ui.input.search.value().is_empty()
+        && app.navigation.view == View::Items
+    {
+        app.search.items_query.len()
+    } else {
+        items.len()
     };
+
+    let start = app.scroll.start;
+    let end = app.scroll.end.min(total);
+    app.scroll.visible = area.height as usize;
+
+    if app.scroll.end == 0 {
+        app.scroll.end = app.scroll.visible;
+    }
+
+    if app.scroll.selected > app.scroll.visible {
+        app.scroll.selected = app.scroll.visible - 1;
+    }
 
     let items_display: Vec<ListItem> = if app.ui.input.active == InputActive::Search
         && !app.ui.input.search.value().is_empty()
         && app.navigation.view == View::Items
     {
-        app.search
-            .items_query
+        app.search.items_query[start..end]
             .iter()
             .enumerate()
             .map(|(i, &index)| {
@@ -160,7 +174,7 @@ fn render_items(
                 let list = app.current_list_name();
                 let is_downloaded = app.is_downloaded(&item.item);
                 let is_favorite = app.favorite.is_favorite(list, &item.item);
-                let selected = i == app.ui.items_in_list.selected().unwrap_or_default();
+                let selected = i == app.scroll.selected;
 
                 let (icon, style) = match (selected, is_favorite, is_downloaded) {
                     (true, true, false) => ("  ", styles.favorite_selected),
@@ -177,7 +191,7 @@ fn render_items(
             })
             .collect()
     } else {
-        items[0..end]
+        items[start..end]
             .iter()
             .enumerate()
             .map(|(i, item)| {
@@ -185,7 +199,7 @@ fn render_items(
                 let in_list = app.navigation.view == View::Items;
                 let is_downloaded = app.is_downloaded(&item.item);
                 let is_favorite = app.favorite.is_favorite(list, &item.item);
-                let selected = i == app.ui.items_in_list.selected().unwrap_or_default();
+                let selected = i == app.scroll.selected;
 
                 let (icon, style) = match (selected, is_favorite, in_list, is_downloaded) {
                     (true, true, true, false) => ("  ", styles.favorite_selected),
@@ -203,9 +217,7 @@ fn render_items(
             .collect()
     };
 
-    let list = List::new(items_display)
-        .block(block)
-        .highlight_style(styles.selected);
+    let list = List::new(items_display).block(block);
 
-    frame.render_stateful_widget(list, area, &mut app.ui.items_in_list);
+    frame.render_widget(list, area);
 }

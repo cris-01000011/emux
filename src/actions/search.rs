@@ -25,7 +25,7 @@ impl App {
                 self.search.saved_list_selection = self.ui.lists.selected();
             }
             View::Items => {
-                self.search.saved_item_selection = self.ui.items_in_list.selected();
+                self.search.saved_item_selection = Some(self.scroll.index_in_list());
             }
         }
 
@@ -36,13 +36,16 @@ impl App {
             }
             View::Items => {
                 self.search_items();
-                self.ui.items_in_list.select_first();
+                self.scroll.select_first();
             }
         };
     }
 
     pub fn stop_search(&mut self) {
         self.ui.input.active = InputActive::None;
+
+        let items = self.get_current_list_items();
+        self.scroll.total = items.len();
 
         self.restore_selection();
     }
@@ -60,7 +63,23 @@ impl App {
                 if let Some(saved) = self.search.saved_item_selection {
                     self.clear_search();
                     self.reload_data();
-                    self.ui.items_in_list.select(Some(saved));
+                    if saved < self.scroll.visible {
+                        self.scroll.start = 0;
+                        self.scroll.end = self.scroll.visible;
+                        self.scroll.selected = saved;
+                        return;
+                    }
+
+                    if saved > self.scroll.total - self.scroll.visible {
+                        self.scroll.start = self.scroll.total - self.scroll.visible;
+                        self.scroll.end = self.scroll.total;
+                        self.scroll.selected = saved - self.scroll.start;
+                        return;
+                    }
+
+                    self.scroll.start = (saved - self.scroll.visible) + self.scroll.visible / 2;
+                    self.scroll.end = saved + self.scroll.visible / 2;
+                    self.scroll.selected = self.scroll.end - saved;
                 }
             }
         }
@@ -72,13 +91,13 @@ impl App {
                 View::Lists => {
                     self.search_lists();
                     self.ui.lists.select_first();
-                    self.ui.items_in_list.select_first();
+                    self.scroll.select_first();
                     self.update_selected_list_from_search();
                     self.reload_data();
                 }
                 View::Items => {
                     self.search_items();
-                    self.ui.items_in_list.select_first();
+                    self.scroll.select_first();
                     self.update_selected_list_from_search();
                 }
             };

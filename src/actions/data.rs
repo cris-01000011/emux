@@ -15,7 +15,6 @@ use crate::{
 pub struct AppData {
     pub lists: Vec<PathBuf>,
     pub items_in_list: HashMap<PathBuf, Vec<ListItem>>,
-    pub items_in_list_selections: HashMap<PathBuf, usize>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -164,37 +163,6 @@ impl App {
 
     fn load_list(&mut self, path: &Path) {
         self.navigation.current_list_path = Some(path.to_path_buf());
-        self.restore_item_selected();
-    }
-
-    pub fn save_item_selected(&mut self) {
-        if let Some(path) = &self.navigation.current_list_path {
-            if let Some(selected) = self.ui.items_in_list.selected() {
-                self.data
-                    .items_in_list_selections
-                    .insert(path.to_path_buf(), selected);
-            }
-        }
-    }
-
-    fn restore_item_selected(&mut self) {
-        if self.favorite.in_favorites {
-            self.ui.items_in_list.select(Some(0));
-            return;
-        }
-
-        let Some(path) = &self.navigation.current_list_path else {
-            return;
-        };
-
-        let restored = self
-            .data
-            .items_in_list_selections
-            .get(path)
-            .copied()
-            .unwrap_or_default();
-
-        self.ui.items_in_list.select(Some(restored));
     }
 
     pub fn get_current_list_downloaded_size(&self) -> u64 {
@@ -217,7 +185,7 @@ impl App {
     }
 
     pub fn get_current_item_downloaded_size(&self) -> u64 {
-        let selected = self.ui.items_in_list.selected().unwrap_or_default();
+        let selected = self.scroll.index_in_list();
 
         let item_index = if self.ui.input.active == InputActive::Search {
             match self.search.items_query.get(selected) {

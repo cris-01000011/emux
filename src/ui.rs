@@ -15,7 +15,6 @@ use crate::components::{
 #[derive(Default)]
 pub struct UiState {
     pub lists: ListState,
-    pub items_in_list: ListState,
     pub input: Inputs,
     pub popup: Popup,
 }

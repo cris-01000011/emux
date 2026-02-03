@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use rand::Rng;
-use ratatui::widgets::ListState;
 
 use crate::{app::App, components::input::InputActive};
 
@@ -19,13 +18,6 @@ pub struct Navigation {
 }
 
 impl App {
-    fn current_list_state(&mut self) -> &mut ListState {
-        match self.navigation.view {
-            View::Lists => &mut self.ui.lists,
-            View::Items => &mut self.ui.items_in_list,
-        }
-    }
-
     pub fn update_selected_list_from_search(&mut self) {
         // When searching in Lists, need to update the actual selected list
         if self.navigation.view == View::Lists
@@ -51,39 +43,18 @@ impl App {
             && self.ui.input.active == InputActive::Search
             && !self.ui.input.search.value().is_empty()
         {
-            if let Some(selected_index) = self.ui.items_in_list.selected() {
-                if let Some(&real_item_index) = self.search.items_query.get(selected_index) {
-                    self.search.saved_item_selection = Some(real_item_index);
-                }
-            }
-        }
-    }
-
-    fn current_list_len(&self) -> usize {
-        match self.navigation.view {
-            View::Lists => {
-                if self.ui.input.active == InputActive::Search
-                    && !self.ui.input.search.value().is_empty()
-                {
-                    self.search.lists_query.len()
-                } else {
-                    self.data.lists.len()
-                }
-            }
-            View::Items => {
-                if self.ui.input.active == InputActive::Search
-                    && !self.ui.input.search.value().is_empty()
-                {
-                    self.search.items_query.len()
-                } else {
-                    self.get_current_list_items_count()
-                }
+            let selected_index = self.scroll.selected;
+            if let Some(&real_item_index) = self.search.items_query.get(selected_index) {
+                self.search.saved_item_selection = Some(real_item_index);
             }
         }
     }
 
     pub fn move_up(&mut self) {
-        self.current_list_state().select_previous();
+        match self.navigation.view {
+            View::Lists => self.ui.lists.select_previous(),
+            View::Items => self.scroll.move_up(),
+        }
 
         self.update_selected_list_from_search();
 
@@ -93,7 +64,10 @@ impl App {
     }
 
     pub fn move_down(&mut self) {
-        self.current_list_state().select_next();
+        match self.navigation.view {
+            View::Lists => self.ui.lists.select_next(),
+            View::Items => self.scroll.move_down(),
+        }
 
         self.update_selected_list_from_search();
 
@@ -103,7 +77,10 @@ impl App {
     }
 
     pub fn go_to_first_item(&mut self) {
-        self.current_list_state().select_first();
+        match self.navigation.view {
+            View::Lists => self.ui.lists.select_first(),
+            View::Items => self.scroll.select_first(),
+        }
 
         self.update_selected_list_from_search();
 
@@ -113,10 +90,13 @@ impl App {
     }
 
     pub fn go_to_last_item(&mut self) {
-        let len = self.current_list_len();
+        let len = self.data.lists.len();
 
         if len > 0 {
-            self.current_list_state().select(Some(len - 1));
+            match self.navigation.view {
+                View::Lists => self.ui.lists.select(Some(len - 1)),
+                View::Items => self.scroll.select_last(),
+            }
 
             self.update_selected_list_from_search();
 
@@ -127,11 +107,14 @@ impl App {
     }
 
     pub fn jump_to_random(&mut self) {
-        let len = self.current_list_len();
+        let len = self.data.lists.len();
 
         if len > 0 {
             let random_index = rand::thread_rng().gen_range(0..len);
-            self.current_list_state().select(Some(random_index));
+            match self.navigation.view {
+                View::Lists => self.ui.lists.select(Some(random_index)),
+                View::Items => self.scroll.select_random(),
+            }
 
             self.update_selected_list_from_search();
 
@@ -143,6 +126,8 @@ impl App {
 
     pub fn open_list(&mut self) {
         self.navigation.view = View::Items;
+        let items = self.get_current_list_items();
+        self.scroll.total = items.len();
         self.load_current_commands();
     }
 
@@ -160,16 +145,10 @@ impl App {
             return;
         }
 
-        let list = self.current_list_name();
-
-        if let Some(item_selected) = self.ui.items_in_list.selected() {
-            self.data
-                .items_in_list_selections
-                .insert(list.into(), item_selected);
-        }
+        self.scroll.select_first();
+        self.scroll.total = 0;
 
         self.navigation.view = View::Lists;
-        self.save_item_selected();
         self.reload_data();
     }
 }

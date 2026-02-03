@@ -13,6 +13,7 @@ use crate::{
         download::{Download, DownloadEvent},
         favorite::Favorite,
         navigation::Navigation,
+        scroll::Scroll,
         search::Search,
     },
     components::{input::InputActive, popup::ActivePopup},
@@ -33,6 +34,7 @@ pub struct App {
     pub download: Download,
     pub favorite: Favorite,
     pub navigation: Navigation,
+    pub scroll: Scroll,
     pub search: Search,
     pub state: AppState,
     pub ui: UiState,
@@ -50,6 +52,7 @@ impl App {
             download: Default::default(),
             favorite: Default::default(),
             navigation: Default::default(),
+            scroll: Default::default(),
             search: Default::default(),
             state: Default::default(),
             ui: Default::default(),
@@ -153,6 +156,7 @@ impl App {
                         _ => {
                             self.ui.input.search.handle_event(&event);
                             self.update_search();
+                            self.scroll.total = self.search.items_query.len();
                         }
                     },
                     InputActive::NewListName => match key.code {
