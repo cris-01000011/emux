@@ -154,7 +154,7 @@ impl App {
                         KeyCode::Up => self.move_up(),
                         KeyCode::Down => self.move_down(),
                         _ => {
-                            self.ui.input.search.handle_event(&event);
+                            self.ui.input.search.handle_event(event);
                             self.update_search();
                             self.scroll.total = self.search.items_query.len();
                         }
@@ -168,7 +168,7 @@ impl App {
                             self.ui.input.active = InputActive::NewListUrl
                         }
                         _ => {
-                            self.ui.input.new_list_name.handle_event(&event);
+                            self.ui.input.new_list_name.handle_event(event);
                         }
                     },
                     InputActive::NewListUrl => match key.code {
@@ -180,7 +180,7 @@ impl App {
                             self.ui.input.active = InputActive::NewListName
                         }
                         _ => {
-                            self.ui.input.new_list_url.handle_event(&event);
+                            self.ui.input.new_list_url.handle_event(event);
                         }
                     },
 
