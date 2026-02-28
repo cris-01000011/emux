@@ -15,6 +15,7 @@ use crate::{
 pub struct AppData {
     pub lists: Vec<PathBuf>,
     pub items_in_list: HashMap<PathBuf, Vec<ListItem>>,
+    pub list_downloaded_sizes: HashMap<PathBuf, u64>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -27,6 +28,7 @@ impl App {
     pub fn init_lists(&mut self) {
         self.load_default_lists();
         self.load_all_list_items();
+        self.load_all_list_sizes();
         self.data.lists.sort();
         self.ui.lists.select_first();
 
@@ -48,7 +50,7 @@ impl App {
         self.data.items_in_list.clear();
 
         for list_path in &self.data.lists {
-            if let Some(data) = self.load_list_data(&list_path) {
+            if let Some(data) = self.load_list_data(list_path) {
                 self.data.items_in_list.insert(list_path.clone(), data);
             }
         }
@@ -63,32 +65,28 @@ impl App {
         serde_json::from_str::<Vec<ListItem>>(&data).ok()
     }
 
+    fn load_all_list_sizes(&mut self) {
+        self.data.list_downloaded_sizes.clear();
+
+        for list_path in &self.data.lists {
+            let size = self.calculate_list_downloaded_size(list_path);
+            self.data
+                .list_downloaded_sizes
+                .insert(list_path.clone(), size);
+        }
+    }
+
     pub fn reload_data(&mut self) {
-        // Simply update the current list reference, no data reloading
-        if self.navigation.view == View::Lists {
-            // When in Lists view, check if we're in search mode
-            if self.ui.input.active == InputActive::Search
-                && !self.ui.input.search.value().is_empty()
-            {
-                // Use the real list index from search results
-                if let Some(selected_index) = self.ui.lists.selected() {
-                    if let Some(&real_list_index) = self.search.lists_query.get(selected_index) {
-                        if let Some(path) = self.data.lists.get(real_list_index) {
-                            self.navigation.current_list_path = Some(path.clone());
-                        }
-                    }
-                }
-            } else {
-                // Use normal selection
-                if let Some(path) = self.selected_json_path() {
-                    self.load_list(&path);
-                }
-            }
-        } else {
-            // For Items view, just reload commands
-            if let Some(path) = self.selected_json_path() {
-                self.load_list(&path);
-            }
+        if self.navigation.view == View::Lists
+            && self.ui.input.active == InputActive::Search
+            && !self.ui.input.search.value().is_empty()
+            && let Some(selected_index) = self.ui.lists.selected()
+            && let Some(&real_list_index) = self.search.lists_query.get(selected_index)
+            && let Some(path) = self.data.lists.get(real_list_index)
+        {
+            self.navigation.current_list_path = Some(path.clone());
+        } else if let Some(path) = self.selected_json_path() {
+            self.load_list(&path);
         }
 
         self.load_current_commands();
@@ -104,20 +102,20 @@ impl App {
     }
 
     pub fn get_current_list_items(&self) -> Vec<ListItem> {
-        if let Some(path) = &self.navigation.current_list_path {
-            if let Some(items) = self.data.items_in_list.get(path) {
-                let mut result = items.clone();
+        if let Some(path) = &self.navigation.current_list_path
+            && let Some(items) = self.data.items_in_list.get(path)
+        {
+            let mut result = items.clone();
 
-                // Apply favorites filter if needed
-                if self.favorite.in_favorites {
-                    let list = self.current_list_name();
-                    result.retain(|item| self.favorite.is_favorite(list, &item.item));
-                }
-
-                return result;
+            if self.favorite.in_favorites {
+                let list = self.current_list_name();
+                result.retain(|item| self.favorite.is_favorite(list, &item.item));
             }
+
+            result
+        } else {
+            Vec::new()
         }
-        Vec::new()
     }
 
     pub fn get_current_list_items_count(&self) -> usize {
@@ -130,10 +128,10 @@ impl App {
         self.search.lists_query.clear();
 
         for (index, path) in self.data.lists.iter().enumerate() {
-            if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
-                if name.to_lowercase().contains(&query) {
-                    self.search.lists_query.push(index);
-                }
+            if let Some(name) = path.file_stem().and_then(|s| s.to_str())
+                && name.to_lowercase().contains(&query)
+            {
+                self.search.lists_query.push(index);
             }
         }
     }
@@ -165,8 +163,12 @@ impl App {
         self.navigation.current_list_path = Some(path.to_path_buf());
     }
 
-    pub fn get_current_list_downloaded_size(&self) -> u64 {
-        let list_name = self.current_list_name();
+    fn calculate_list_downloaded_size(&self, list_path: &Path) -> u64 {
+        let list_name = list_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown");
+
         let download_dir = self.config.base_dir.join("downloads").join(list_name);
 
         if !download_dir.exists() {
@@ -175,12 +177,27 @@ impl App {
 
         match fs::read_dir(&download_dir) {
             Ok(entries) => entries
-                .filter_map(|entry| entry.ok())
-                .filter_map(|entry| entry.metadata().ok())
-                .filter(|metadata| metadata.is_file())
-                .map(|metadata| metadata.len())
+                .filter_map(|e| e.ok())
+                .filter_map(|e| e.metadata().ok())
+                .filter(|m| m.is_file())
+                .map(|m| m.len())
                 .sum(),
             Err(_) => 0,
+        }
+    }
+
+    pub fn get_current_list_downloaded_size(&self) -> u64 {
+        if let Some(path) = &self.navigation.current_list_path {
+            return *self.data.list_downloaded_sizes.get(path).unwrap_or(&0);
+        }
+
+        0
+    }
+
+    pub fn refresh_current_list_size(&mut self) {
+        if let Some(path) = &self.navigation.current_list_path {
+            let size = self.calculate_list_downloaded_size(path);
+            self.data.list_downloaded_sizes.insert(path.clone(), size);
         }
     }
 

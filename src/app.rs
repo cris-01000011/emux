@@ -91,6 +91,7 @@ impl App {
                         }
 
                         DownloadEvent::Finished => {
+                            self.refresh_current_list_size();
                             self.download.rx = None;
                         }
 
