@@ -176,10 +176,8 @@ fn render_items(
                 let selected = i == app.scroll.selected;
 
                 let (icon, style) = match (selected, is_favorite, is_downloaded) {
-                    (true, true, false) => ("  ", styles.favorite_selected),
-                    (true, true, true) => ("  ", styles.favorite_selected),
-                    (_, true, false) => ("  ", styles.favorite),
-                    (_, true, true) => ("  ", styles.favorite),
+                    (true, true, _) => ("  ", styles.favorite_selected),
+                    (_, true, _) => ("  ", styles.favorite),
                     (true, false, false) => ("  ", styles.selected),
                     (true, false, true) => ("  ", styles.selected),
                     (_, _, true) => ("  ", styles.normal),
@@ -201,10 +199,8 @@ fn render_items(
                 let selected = i == app.scroll.selected;
 
                 let (icon, style) = match (selected, is_favorite, in_list, is_downloaded) {
-                    (true, true, true, false) => ("  ", styles.favorite_selected),
-                    (true, true, true, true) => ("  ", styles.favorite_selected),
-                    (_, true, _, false) => ("  ", styles.favorite),
-                    (_, true, _, true) => ("  ", styles.favorite),
+                    (true, true, true, _) => ("  ", styles.favorite_selected),
+                    (_, true, _, _) => ("  ", styles.favorite),
                     (true, false, true, false) => ("  ", styles.selected),
                     (true, false, true, true) => ("  ", styles.selected),
                     (_, _, _, true) => ("  ", styles.normal),
