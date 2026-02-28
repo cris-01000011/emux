@@ -122,7 +122,6 @@ impl App {
         self.get_current_list_items().len()
     }
 
-    // Search methods that populate SearchState queries
     pub fn search_lists(&mut self) {
         let query = self.ui.input.search.value().to_lowercase();
         self.search.lists_query.clear();

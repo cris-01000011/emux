@@ -43,7 +43,7 @@ async fn download_file_async(
     let total_size = response.content_length();
     let mut downloaded: u64 = 0;
     let mut last_progress_update: u64 = 0;
-    const PROGRESS_UPDATE_INTERVAL: u64 = 1024 * 1024; // Update every 1MB
+    const PROGRESS_UPDATE_INTERVAL: u64 = 1024 * 1024;
 
     let mut file = match tokio::fs::File::create(&destination).await {
         Ok(f) => f,
@@ -71,7 +71,6 @@ async fn download_file_async(
 
         downloaded += chunk.len() as u64;
 
-        // Only send progress updates at intervals to avoid overwhelming the channel
         if downloaded >= last_progress_update + PROGRESS_UPDATE_INTERVAL {
             let percent = match total_size {
                 Some(total) if total > 0 => (downloaded as f64 / total as f64).clamp(0.0, 1.0),
@@ -87,7 +86,6 @@ async fn download_file_async(
         }
     }
 
-    // Send final progress update to ensure 100% is displayed
     let percent = match total_size {
         Some(total) if total > 0 => (downloaded as f64 / total as f64).clamp(0.0, 1.0),
         _ => 1.0,
@@ -126,7 +124,6 @@ impl App {
         let clean_title = sanitize_filename(&selected_rom.item);
         let rom_path = download_dir.join(&clean_title);
 
-        // Clone only what the async task needs
         let url = selected_rom.url.clone();
         let rom_path_clone = rom_path.clone();
 

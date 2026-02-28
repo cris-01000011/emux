@@ -19,26 +19,21 @@ pub struct Navigation {
 
 impl App {
     pub fn update_selected_list_from_search(&mut self) {
-        // When searching in Lists, need to update the actual selected list
         if self.navigation.view == View::Lists
             && self.ui.input.active == InputActive::Search
             && !self.ui.input.search.value().is_empty()
+            && let Some(selected_index) = self.ui.lists.selected()
+            && let Some(&real_list_index) = self.search.lists_query.get(selected_index)
         {
-            if let Some(selected_index) = self.ui.lists.selected() {
-                if let Some(&real_list_index) = self.search.lists_query.get(selected_index) {
-                    // Update the actual selected list based on search results
-                    self.commands.selected_list = real_list_index; // Update for command context
-                    // Update current list path
-                    if let Some(path) = self.data.lists.get(real_list_index) {
-                        self.navigation.current_list_path = Some(path.clone());
-                    }
-                    // Update saved selection to restore after search ends
-                    self.search.saved_list_selection = Some(real_list_index);
-                }
+            self.commands.selected_list = real_list_index;
+
+            if let Some(path) = self.data.lists.get(real_list_index) {
+                self.navigation.current_list_path = Some(path.clone());
             }
+
+            self.search.saved_list_selection = Some(real_list_index);
         }
 
-        // Also update saved selection for items when searching in Items
         if self.navigation.view == View::Items
             && self.ui.input.active == InputActive::Search
             && !self.ui.input.search.value().is_empty()

@@ -42,10 +42,10 @@ impl App {
             .join("system-lists")
             .join("favorites.json");
 
-        if let Ok(data) = std::fs::read_to_string(&self.favorite.path) {
-            if let Ok(favorites) = serde_json::from_str::<Vec<FavoriteEntry>>(&data) {
-                self.favorite.list = favorites;
-            }
+        if let Ok(data) = std::fs::read_to_string(&self.favorite.path)
+            && let Ok(favorites) = serde_json::from_str::<Vec<FavoriteEntry>>(&data)
+        {
+            self.favorite.list = favorites;
         }
     }
 

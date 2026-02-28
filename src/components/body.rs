@@ -115,8 +115,7 @@ fn render_lists(
         app.data
             .lists
             .iter()
-            .enumerate()
-            .map(|(_, path)| {
+            .map(|path| {
                 let list_name = extract_list_name(path);
 
                 ListItem::new(Line::from(vec![Span::raw("  "), Span::raw(list_name)]))

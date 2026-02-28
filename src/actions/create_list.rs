@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::Serialize;
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::sync::mpsc;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use url::Url;
 
 use crate::app::App;
@@ -71,7 +71,6 @@ async fn create_list_async(
     let elements: Vec<_> = document.select(&selector).collect();
     let total = elements.len();
 
-    // Allowed extensions
     let include: Vec<&str> = vec![".zip", ".chd", ".iso", ".7z", ".rar"];
 
     for (current, element) in elements.into_iter().enumerate() {
@@ -86,20 +85,19 @@ async fn create_list_async(
             continue;
         }
 
-        if let Some(href) = element.value().attr("href") {
-            if let Ok(full_url) = base.join(href) {
-                let url_str = full_url.as_str().to_lowercase();
+        if let Some(href) = element.value().attr("href")
+            && let Ok(full_url) = base.join(href)
+        {
+            let url_str = full_url.as_str().to_lowercase();
 
-                if include.iter().any(|ext| url_str.ends_with(ext)) {
-                    items.push(LinkItem {
-                        item: text,
-                        url: full_url.to_string(),
-                    });
-                }
+            if include.iter().any(|ext| url_str.ends_with(ext)) {
+                items.push(LinkItem {
+                    item: text,
+                    url: full_url.to_string(),
+                });
             }
         }
 
-        // Send progress update
         let _ = tx.send(CreateListEvent::Progress {
             current,
             total,
@@ -151,6 +149,4 @@ impl App {
             create_list_async(input_name, input_url, tx, lists_dir).await;
         });
     }
-
-
 }
