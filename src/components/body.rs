@@ -1,9 +1,9 @@
 use ratatui::{
-    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, List, ListItem, Padding},
+    Frame,
 };
 
 use crate::{
@@ -148,9 +148,19 @@ fn render_items(
     styles: &ItemsStyles,
     block: Block,
 ) {
-    let items = app.get_current_list_items();
+    app.scroll.visible = area.height as usize;
+
+    if app.scroll.end == 0 {
+        app.scroll.end = app.scroll.visible;
+    }
+
+    if app.scroll.selected > app.scroll.visible {
+        app.scroll.selected = app.scroll.visible - 1;
+    }
 
     let is_local_lists = app.navigation.list_view == ListsView::LocalLists;
+
+    let items = app.get_current_list_items_slice();
 
     let total = if app.ui.input.active == InputActive::Search
         && !app.ui.input.search.value().is_empty()
@@ -163,15 +173,6 @@ fn render_items(
 
     let start = app.scroll.start;
     let end = app.scroll.end.min(total);
-    app.scroll.visible = area.height as usize;
-
-    if app.scroll.end == 0 {
-        app.scroll.end = app.scroll.visible;
-    }
-
-    if app.scroll.selected > app.scroll.visible {
-        app.scroll.selected = app.scroll.visible - 1;
-    }
 
     let items_display: Vec<ListItem> = if app.ui.input.active == InputActive::Search
         && !app.ui.input.search.value().is_empty()

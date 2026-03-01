@@ -111,7 +111,9 @@ impl App {
                 .insert(list_path.to_path_buf(), size);
 
             let downloaded = self.get_downloaded_items_in_list(list_path);
-            self.data.downloaded_items.insert(list_path.clone(), downloaded);
+            self.data
+                .downloaded_items
+                .insert(list_path.clone(), downloaded);
         }
 
         for local_list_path in &self.data.local_lists {
@@ -206,17 +208,44 @@ impl App {
         if let Some(path) = &self.navigation.current_list_path
             && let Some(items) = self.data.items_in_list.get(path)
         {
-            let mut result = items.clone();
-
             if self.favorite.in_favorites {
                 let list = self.current_list_name();
-                result.retain(|item| self.favorite.is_favorite(list, &item.item));
+                items
+                    .iter()
+                    .filter(|item| self.favorite.is_favorite(list, &item.item))
+                    .cloned()
+                    .collect()
+            } else {
+                items.clone()
             }
-
-            result
         } else {
             Vec::new()
         }
+    }
+
+    pub fn get_current_list_items_slice(&self) -> &[ListItem] {
+        if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
+            let path = match &self.navigation.current_local_list_path {
+                Some(p) => p.clone(),
+                None => {
+                    let selected = self.ui.lists.selected().unwrap_or_default();
+                    if let Some(local_list) = self.data.local_lists.get(selected) {
+                        local_list.clone()
+                    } else {
+                        return &[];
+                    }
+                }
+            };
+
+            return self.data.items_in_local_list.get(&path).map(|v| v.as_slice()).unwrap_or(&[]);
+        }
+
+        self.navigation
+            .current_list_path
+            .as_ref()
+            .and_then(|path| self.data.items_in_list.get(path))
+            .map(|items| items.as_slice())
+            .unwrap_or(&[])
     }
 
     pub fn get_current_local_list_items(&self) -> Vec<ListItem> {

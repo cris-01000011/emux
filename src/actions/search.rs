@@ -44,7 +44,7 @@ impl App {
     pub fn stop_search(&mut self) {
         self.ui.input.active = InputActive::None;
 
-        let items = self.get_current_list_items();
+        let items = self.get_current_list_items_slice();
         self.scroll.total = items.len();
 
         self.restore_selection();
