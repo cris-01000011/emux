@@ -15,10 +15,9 @@ pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
 
     render_search_input(app, frame, chunks[0]);
 
-    let downloaded_size_bytes = if app.navigation.view == View::Items {
-        app.get_current_item_downloaded_size()
-    } else {
-        app.get_current_list_downloaded_size()
+    let downloaded_size_bytes = match app.navigation.view {
+        View::Lists => app.get_current_list_downloaded_size(),
+        View::Items => app.get_current_item_downloaded_size(),
     };
 
     let downloaded_size_gb = downloaded_size_bytes as f64 / (1024.0 * 1024.0 * 1024.0);

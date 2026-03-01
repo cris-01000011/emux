@@ -5,6 +5,13 @@ use rand::Rng;
 use crate::{app::App, components::input::InputActive};
 
 #[derive(Debug, Clone, Copy, PartialEq, Default, Eq)]
+pub enum ListsView {
+    #[default]
+    Lists,
+    LocalLists,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default, Eq)]
 pub enum View {
     #[default]
     Lists,
@@ -13,8 +20,25 @@ pub enum View {
 
 #[derive(Default)]
 pub struct Navigation {
+    pub list_view: ListsView,
     pub view: View,
     pub current_list_path: Option<PathBuf>,
+}
+
+impl Navigation {
+    pub fn next_view(&mut self) {
+        match self.list_view {
+            ListsView::Lists => self.list_view = ListsView::LocalLists,
+            ListsView::LocalLists => self.list_view = ListsView::Lists,
+        }
+    }
+
+    pub fn prev_view(&mut self) {
+        match self.list_view {
+            ListsView::Lists => self.list_view = ListsView::LocalLists,
+            ListsView::LocalLists => self.list_view = ListsView::Lists,
+        }
+    }
 }
 
 impl App {

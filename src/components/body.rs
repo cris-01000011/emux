@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::{
-    actions::navigation::View,
+    actions::navigation::{ListsView, View},
     app::App,
     components::{commands::render_commands, input::InputActive, status_bar::render_status_bar},
     utils::string::extract_list_name,
@@ -112,8 +112,12 @@ fn render_lists(
             })
             .collect()
     } else {
-        app.data
-            .lists
+        let lists = match app.navigation.list_view {
+            ListsView::Lists => &app.data.lists,
+            ListsView::LocalLists => &app.data.local_lists,
+        };
+
+        lists
             .iter()
             .map(|path| {
                 let list_name = extract_list_name(path);

@@ -16,6 +16,9 @@ pub struct AppData {
     pub lists: Vec<PathBuf>,
     pub items_in_list: HashMap<PathBuf, Vec<ListItem>>,
     pub list_downloaded_sizes: HashMap<PathBuf, u64>,
+    pub local_lists: Vec<PathBuf>,
+    pub items_in_local_list: HashMap<PathBuf, Vec<PathBuf>>,
+    pub local_list_downloaded_sizes: HashMap<PathBuf, u64>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -29,6 +32,9 @@ impl App {
         self.load_default_lists();
         self.load_all_list_items();
         self.load_all_list_sizes();
+        self.load_local_lists();
+        self.load_all_local_list_items();
+
         self.data.lists.sort();
         self.ui.lists.select_first();
 
@@ -46,6 +52,24 @@ impl App {
             .unwrap_or_default();
     }
 
+    pub fn load_local_lists(&mut self) {
+        let dirs: Vec<PathBuf> = match fs::read_dir(self.config.base_dir.join("local")) {
+            Ok(entries) => entries
+                .filter_map(|entry| {
+                    let entry = entry.ok()?;
+                    let metadata = entry.metadata().ok()?;
+                    if metadata.is_dir() {
+                        Some(entry.path())
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            Err(_) => Vec::new(),
+        };
+        self.data.local_lists = dirs;
+    }
+
     fn load_all_list_items(&mut self) {
         self.data.items_in_list.clear();
 
@@ -53,6 +77,16 @@ impl App {
             if let Some(data) = self.load_list_data(list_path) {
                 self.data.items_in_list.insert(list_path.clone(), data);
             }
+        }
+    }
+
+    pub fn load_all_local_list_items(&mut self) {
+        self.data.items_in_local_list.clear();
+
+        for dir in &self.data.local_lists {
+            let items = Self::collect_files_recursively(dir);
+
+            self.data.items_in_local_list.insert(dir.clone(), items);
         }
     }
 
@@ -67,12 +101,20 @@ impl App {
 
     fn load_all_list_sizes(&mut self) {
         self.data.list_downloaded_sizes.clear();
+        self.data.local_list_downloaded_sizes.clear();
 
         for list_path in &self.data.lists {
             let size = self.calculate_list_downloaded_size(list_path);
             self.data
                 .list_downloaded_sizes
-                .insert(list_path.clone(), size);
+                .insert(list_path.to_path_buf(), size);
+        }
+
+        for local_list_path in &self.data.local_lists {
+            let size = self.calculate_list_downloaded_size(local_list_path);
+            self.data
+                .local_list_downloaded_sizes
+                .insert(local_list_path.to_path_buf(), size);
         }
     }
 
@@ -90,6 +132,27 @@ impl App {
         }
 
         self.load_current_commands();
+    }
+
+    fn collect_files_recursively(dir: &Path) -> Vec<PathBuf> {
+        let mut files = Vec::new();
+
+        if let Ok(entries) = fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+
+                if let Ok(metadata) = entry.metadata() {
+                    if metadata.is_file() {
+                        files.push(path);
+                    } else if metadata.is_dir() {
+                        // Recurse into subdirectory
+                        files.extend(Self::collect_files_recursively(&path));
+                    }
+                }
+            }
+        }
+
+        files
     }
 
     pub fn current_list_name(&self) -> &str {
