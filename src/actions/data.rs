@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     path::{Path, PathBuf},
 };
@@ -16,6 +16,7 @@ pub struct AppData {
     pub lists: Vec<PathBuf>,
     pub items_in_list: HashMap<PathBuf, Vec<ListItem>>,
     pub list_downloaded_sizes: HashMap<PathBuf, u64>,
+    pub downloaded_items: HashMap<PathBuf, HashSet<String>>,
     pub local_lists: Vec<PathBuf>,
     pub items_in_local_list: HashMap<PathBuf, Vec<ListItem>>,
     pub local_list_downloaded_sizes: HashMap<PathBuf, u64>,
@@ -101,12 +102,16 @@ impl App {
     fn load_all_list_sizes(&mut self) {
         self.data.list_downloaded_sizes.clear();
         self.data.local_list_downloaded_sizes.clear();
+        self.data.downloaded_items.clear();
 
         for list_path in &self.data.lists {
             let size = self.calculate_list_downloaded_size(list_path);
             self.data
                 .list_downloaded_sizes
                 .insert(list_path.to_path_buf(), size);
+
+            let downloaded = self.get_downloaded_items_in_list(list_path);
+            self.data.downloaded_items.insert(list_path.clone(), downloaded);
         }
 
         for local_list_path in &self.data.local_lists {
@@ -115,6 +120,33 @@ impl App {
                 .local_list_downloaded_sizes
                 .insert(local_list_path.to_path_buf(), size);
         }
+    }
+
+    fn get_downloaded_items_in_list(&self, list_path: &Path) -> HashSet<String> {
+        let list_name = list_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown");
+
+        let download_dir = self.config.base_dir.join("downloads").join(list_name);
+
+        if !download_dir.exists() {
+            return HashSet::new();
+        }
+
+        fs::read_dir(&download_dir)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .filter_map(|e| {
+                        let metadata = e.metadata().ok()?;
+                        if !metadata.is_file() {
+                            return None;
+                        }
+                        e.file_name().into_string().ok()
+                    })
+                    .collect()
+            })
+            .unwrap_or_default()
     }
 
     pub fn reload_data(&mut self) {
@@ -335,6 +367,9 @@ impl App {
         if let Some(path) = &self.navigation.current_list_path {
             let size = self.calculate_list_downloaded_size(path);
             self.data.list_downloaded_sizes.insert(path.clone(), size);
+
+            let downloaded = self.get_downloaded_items_in_list(path);
+            self.data.downloaded_items.insert(path.clone(), downloaded);
         }
     }
 
@@ -369,15 +404,12 @@ impl App {
     }
 
     pub fn is_downloaded(&self, item_name: &str) -> bool {
-        let list_name = self.current_list_name();
-        let download_dir = self.config.base_dir.join("downloads").join(list_name);
-
-        let clean_filename = sanitize_filename(item_name);
-        let file_path = download_dir.join(clean_filename);
-
-        match fs::metadata(file_path) {
-            Ok(metadata) => metadata.is_file(),
-            Err(_) => false,
+        if let Some(path) = &self.navigation.current_list_path {
+            if let Some(downloaded) = self.data.downloaded_items.get(path) {
+                let clean_filename = sanitize_filename(item_name);
+                return downloaded.contains(&clean_filename);
+            }
         }
+        false
     }
 }
