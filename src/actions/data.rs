@@ -17,7 +17,7 @@ pub struct AppData {
     pub items_in_list: HashMap<PathBuf, Vec<ListItem>>,
     pub list_downloaded_sizes: HashMap<PathBuf, u64>,
     pub local_lists: Vec<PathBuf>,
-    pub items_in_local_list: HashMap<PathBuf, Vec<PathBuf>>,
+    pub items_in_local_list: HashMap<PathBuf, Vec<ListItem>>,
     pub local_list_downloaded_sizes: HashMap<PathBuf, u64>,
 }
 
@@ -84,8 +84,7 @@ impl App {
         self.data.items_in_local_list.clear();
 
         for dir in &self.data.local_lists {
-            let items = Self::collect_files_recursively(dir);
-
+            let items = self.load_local_list_items(dir);
             self.data.items_in_local_list.insert(dir.clone(), items);
         }
     }
@@ -134,28 +133,11 @@ impl App {
         self.load_current_commands();
     }
 
-    fn collect_files_recursively(dir: &Path) -> Vec<PathBuf> {
-        let mut files = Vec::new();
-
-        if let Ok(entries) = fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_file() {
-                        files.push(path);
-                    } else if metadata.is_dir() {
-                        // Recurse into subdirectory
-                        files.extend(Self::collect_files_recursively(&path));
-                    }
-                }
-            }
+    pub fn current_list_name(&self) -> &str {
+        if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
+            return self.current_local_list_name();
         }
 
-        files
-    }
-
-    pub fn current_list_name(&self) -> &str {
         self.navigation
             .current_list_path
             .as_ref()
@@ -164,7 +146,31 @@ impl App {
             .unwrap_or("unknown")
     }
 
+    pub fn current_local_list_name(&self) -> &str {
+        let path = match &self.navigation.current_local_list_path {
+            Some(p) => p,
+            None => {
+                let selected = self.ui.lists.selected().unwrap_or_default();
+                return self
+                    .data
+                    .local_lists
+                    .get(selected)
+                    .and_then(|p| p.file_name())
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown");
+            }
+        };
+
+        path.file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or("unknown")
+    }
+
     pub fn get_current_list_items(&self) -> Vec<ListItem> {
+        if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
+            return self.get_current_local_list_items();
+        }
+
         if let Some(path) = &self.navigation.current_list_path
             && let Some(items) = self.data.items_in_list.get(path)
         {
@@ -181,8 +187,77 @@ impl App {
         }
     }
 
+    pub fn get_current_local_list_items(&self) -> Vec<ListItem> {
+        let path = match &self.navigation.current_local_list_path {
+            Some(p) => p.clone(),
+            None => {
+                let selected = self.ui.lists.selected().unwrap_or_default();
+                if let Some(local_list) = self.data.local_lists.get(selected) {
+                    local_list.clone()
+                } else {
+                    return Vec::new();
+                }
+            }
+        };
+
+        if let Some(cached) = self.data.items_in_local_list.get(&path) {
+            return cached.clone();
+        }
+
+        if !path.exists() {
+            return Vec::new();
+        }
+
+        self.load_local_list_items(&path)
+    }
+
+    pub fn load_local_list_items(&self, path: &std::path::Path) -> Vec<ListItem> {
+        let mut entries: Vec<ListItem> = fs::read_dir(path)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .map(|e| {
+                        let entry_path = e.path();
+                        let name = entry_path
+                            .file_name()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("")
+                            .to_string();
+                        let is_dir = entry_path.is_dir();
+                        ListItem {
+                            item: name,
+                            url: if is_dir {
+                                String::new()
+                            } else {
+                                entry_path.to_string_lossy().to_string()
+                            },
+                        }
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        entries.sort_by(|a, b| {
+            let a_is_dir = !a.url.is_empty();
+            let b_is_dir = !b.url.is_empty();
+            if a_is_dir != b_is_dir {
+                b_is_dir.cmp(&a_is_dir)
+            } else {
+                a.item.to_lowercase().cmp(&b.item.to_lowercase())
+            }
+        });
+
+        entries
+    }
+
     pub fn get_current_list_items_count(&self) -> usize {
+        if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
+            return self.get_current_local_list_items_count();
+        }
         self.get_current_list_items().len()
+    }
+
+    pub fn get_current_local_list_items_count(&self) -> usize {
+        self.get_current_local_list_items().len()
     }
 
     pub fn search_lists(&mut self) {

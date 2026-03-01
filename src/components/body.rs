@@ -72,6 +72,8 @@ struct ItemsStyles {
     selected: Style,
     favorite: Style,
     favorite_selected: Style,
+    folder: Style,
+    folder_selected: Style,
 }
 
 impl ItemsStyles {
@@ -85,6 +87,10 @@ impl ItemsStyles {
             favorite_selected: Style::default()
                 .fg(Color::Black)
                 .bg(Color::Rgb(245, 194, 231)),
+            folder: Style::default().fg(Color::Rgb(139, 233, 253)),
+            folder_selected: Style::default()
+                .fg(Color::Black)
+                .bg(Color::Rgb(139, 233, 253)),
         }
     }
 }
@@ -144,6 +150,8 @@ fn render_items(
 ) {
     let items = app.get_current_list_items();
 
+    let is_local_lists = app.navigation.list_view == ListsView::LocalLists;
+
     let total = if app.ui.input.active == InputActive::Search
         && !app.ui.input.search.value().is_empty()
         && app.navigation.view == View::Items
@@ -174,18 +182,28 @@ fn render_items(
             .enumerate()
             .map(|(i, &index)| {
                 let item = &items[index];
-                let list = app.current_list_name();
-                let is_downloaded = app.is_downloaded(&item.item);
-                let is_favorite = app.favorite.is_favorite(list, &item.item);
+                let is_folder = is_local_lists && item.url.is_empty();
                 let selected = i == app.scroll.selected;
 
-                let (icon, style) = match (selected, is_favorite, is_downloaded) {
-                    (true, true, _) => ("  ", styles.favorite_selected),
-                    (_, true, _) => ("  ", styles.favorite),
-                    (true, false, false) => ("  ", styles.selected),
-                    (true, false, true) => ("  ", styles.selected),
-                    (_, _, true) => ("  ", styles.normal),
-                    (_, _, _) => ("  ", styles.normal),
+                let (icon, style) = if is_folder {
+                    if selected {
+                        (" 󰉋 ", styles.folder_selected)
+                    } else {
+                        (" 󰉋 ", styles.folder)
+                    }
+                } else {
+                    let list = app.current_list_name();
+                    let is_downloaded = app.is_downloaded(&item.item);
+                    let is_favorite = app.favorite.is_favorite(list, &item.item);
+
+                    match (selected, is_favorite, is_downloaded) {
+                        (true, true, _) => ("  ", styles.favorite_selected),
+                        (_, true, _) => ("  ", styles.favorite),
+                        (true, false, false) => ("  ", styles.selected),
+                        (true, false, true) => ("  ", styles.selected),
+                        (_, _, true) => ("  ", styles.normal),
+                        (_, _, _) => ("  ", styles.normal),
+                    }
                 };
 
                 ListItem::new(Line::from(vec![Span::raw(icon), Span::raw(&item.item)])).style(style)
@@ -196,19 +214,29 @@ fn render_items(
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                let list = app.current_list_name();
-                let in_list = app.navigation.view == View::Items;
-                let is_downloaded = app.is_downloaded(&item.item);
-                let is_favorite = app.favorite.is_favorite(list, &item.item);
+                let is_folder = is_local_lists && item.url.is_empty();
                 let selected = i == app.scroll.selected;
 
-                let (icon, style) = match (selected, is_favorite, in_list, is_downloaded) {
-                    (true, true, true, _) => ("  ", styles.favorite_selected),
-                    (_, true, _, _) => ("  ", styles.favorite),
-                    (true, false, true, false) => ("  ", styles.selected),
-                    (true, false, true, true) => ("  ", styles.selected),
-                    (_, _, _, true) => ("  ", styles.normal),
-                    (_, _, _, _) => ("  ", styles.normal),
+                let (icon, style) = if is_folder {
+                    if selected {
+                        (" 󰉋 ", styles.folder_selected)
+                    } else {
+                        (" 󰉋 ", styles.folder)
+                    }
+                } else {
+                    let list = app.current_list_name();
+                    let in_list = app.navigation.view == View::Items;
+                    let is_downloaded = app.is_downloaded(&item.item);
+                    let is_favorite = app.favorite.is_favorite(list, &item.item);
+
+                    match (selected, is_favorite, in_list, is_downloaded) {
+                        (true, true, true, _) => ("  ", styles.favorite_selected),
+                        (_, true, _, _) => ("  ", styles.favorite),
+                        (true, false, true, false) => ("  ", styles.selected),
+                        (true, false, true, true) => ("  ", styles.selected),
+                        (_, _, _, true) => ("  ", styles.normal),
+                        (_, _, _, _) => ("  ", styles.normal),
+                    }
                 };
 
                 ListItem::new(Line::from(vec![Span::raw(icon), Span::raw(&item.item)])).style(style)

@@ -5,7 +5,7 @@ use tokio_stream::StreamExt;
 
 use crate::components::popup::ActivePopup;
 use crate::utils::string::sanitize_filename;
-use crate::{actions::navigation::View, app::App};
+use crate::{actions::navigation::{ListsView, View}, app::App};
 
 pub enum DownloadEvent {
     Progress {
@@ -106,6 +106,10 @@ impl App {
             return;
         }
 
+        if self.navigation.list_view == ListsView::LocalLists {
+            return self.execute_command();
+        }
+
         self.download.progress = 0.0;
         self.download.downloaded = 0;
         self.download.total = 0;
@@ -165,7 +169,11 @@ impl App {
         let download_dir = base_dir.join("downloads").join(list);
 
         let clean_title = sanitize_filename(&selected_rom.item);
-        let rom_path = download_dir.join(&clean_title);
+        let rom_path = if self.navigation.list_view == ListsView::LocalLists {
+            PathBuf::from(&selected_rom.url)
+        } else {
+            download_dir.join(&clean_title)
+        };
         let game_downloaded = rom_path.to_string_lossy();
 
         let retroarch_path = format!(

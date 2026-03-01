@@ -23,6 +23,7 @@ pub struct Navigation {
     pub list_view: ListsView,
     pub view: View,
     pub current_list_path: Option<PathBuf>,
+    pub current_local_list_path: Option<PathBuf>,
 }
 
 impl Navigation {
@@ -144,6 +145,40 @@ impl App {
     }
 
     pub fn open_list(&mut self) {
+        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Lists {
+            let selected = self.ui.lists.selected().unwrap_or_default();
+            if let Some(local_list) = self.data.local_lists.get(selected) {
+                self.navigation.current_local_list_path = Some(local_list.clone());
+                self.navigation.view = View::Items;
+                let items = self.get_current_list_items();
+                self.scroll.total = items.len();
+                self.load_current_commands();
+            }
+            return;
+        }
+
+        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Items {
+            let selected_index = self.scroll.index_in_list();
+            let items = self.get_current_list_items();
+            if let Some(item) = items.get(selected_index) {
+                if item.url.is_empty() {
+                    let current_path = self.navigation.current_local_list_path.as_ref().unwrap();
+                    let new_path = current_path.join(&item.item);
+                    if new_path.exists() && new_path.is_dir() {
+                        let new_items = self.load_local_list_items(&new_path);
+                        self.data.items_in_local_list.insert(new_path.clone(), new_items);
+                        self.navigation.current_local_list_path = Some(new_path);
+                        self.scroll.select_first();
+                        let items = self.get_current_list_items();
+                        self.scroll.total = items.len();
+                        self.load_current_commands();
+                        return;
+                    }
+                }
+            }
+            return;
+        }
+
         self.navigation.view = View::Items;
         let items = self.get_current_list_items();
         self.scroll.total = items.len();
@@ -156,11 +191,55 @@ impl App {
             return;
         }
 
+        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Items {
+            let selected_index = self.scroll.index_in_list();
+            let items = self.get_current_list_items();
+            if let Some(item) = items.get(selected_index) {
+                if !item.url.is_empty() {
+                    self.download_rom();
+                }
+            }
+            return;
+        }
+
         self.download_rom()
     }
 
     pub fn go_back(&mut self) {
         if self.navigation.view == View::Lists {
+            return;
+        }
+
+        if self.navigation.list_view == ListsView::LocalLists {
+            let current_path = self.navigation.current_local_list_path.as_mut();
+            if let Some(path) = current_path {
+                if let Some(parent) = path.parent() {
+                    let selected = self.ui.lists.selected().unwrap_or_default();
+                    let local_list_root = self.data.local_lists.get(selected);
+                    if let Some(root) = local_list_root {
+                        if parent == root || root.parent() == Some(parent) {
+                            self.navigation.current_local_list_path = None;
+                            self.scroll.select_first();
+                            self.scroll.total = 0;
+                            self.navigation.view = View::Lists;
+                            self.reload_data();
+                            return;
+                        } else {
+                            self.navigation.current_local_list_path = Some(parent.to_path_buf());
+                            self.scroll.select_first();
+                            let items = self.get_current_list_items();
+                            self.scroll.total = items.len();
+                            self.load_current_commands();
+                            return;
+                        }
+                    }
+                }
+            }
+            self.navigation.current_local_list_path = None;
+            self.scroll.select_first();
+            self.scroll.total = 0;
+            self.navigation.view = View::Lists;
+            self.reload_data();
             return;
         }
 
