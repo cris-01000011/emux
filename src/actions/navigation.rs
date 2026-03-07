@@ -213,27 +213,27 @@ impl App {
         }
 
         if self.navigation.list_view == ListsView::LocalLists {
-            let current_path = self.navigation.current_local_list_path.as_mut();
+            let current_path = self.navigation.current_local_list_path.as_ref();
             if let Some(path) = current_path {
-                if let Some(parent) = path.parent() {
-                    let selected = self.ui.lists.selected().unwrap_or_default();
-                    let local_list_root = self.data.local_lists.get(selected);
-                    if let Some(root) = local_list_root {
-                        if parent == root || root.parent() == Some(parent) {
-                            self.navigation.current_local_list_path = None;
-                            self.scroll.select_first();
-                            self.scroll.total = 0;
-                            self.navigation.view = View::Lists;
-                            self.reload_data();
-                            return;
-                        } else {
-                            self.navigation.current_local_list_path = Some(parent.to_path_buf());
-                            self.scroll.select_first();
-                            let items = self.get_current_list_items();
-                            self.scroll.total = items.len();
-                            self.load_current_commands();
-                            return;
-                        }
+                let selected = self.ui.lists.selected().unwrap_or_default();
+                let local_list_root = self.data.local_lists.get(selected);
+                if let Some(root) = local_list_root {
+                    if path == root {
+                        self.navigation.current_local_list_path = None;
+                        self.scroll.select_first();
+                        self.scroll.total = 0;
+                        self.navigation.view = View::Lists;
+                        self.reload_data();
+                        return;
+                    }
+                    
+                    if let Some(parent) = path.parent() {
+                        self.navigation.current_local_list_path = Some(parent.to_path_buf());
+                        self.scroll.select_first();
+                        let items = self.get_current_list_items();
+                        self.scroll.total = items.len();
+                        self.load_current_commands();
+                        return;
                     }
                 }
             }

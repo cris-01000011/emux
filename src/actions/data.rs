@@ -298,8 +298,8 @@ impl App {
             .unwrap_or_default();
 
         entries.sort_by(|a, b| {
-            let a_is_dir = !a.url.is_empty();
-            let b_is_dir = !b.url.is_empty();
+            let a_is_dir = a.url.is_empty();
+            let b_is_dir = b.url.is_empty();
             if a_is_dir != b_is_dir {
                 b_is_dir.cmp(&a_is_dir)
             } else {

@@ -184,7 +184,8 @@ fn render_items(
             .map(|(i, &index)| {
                 let item = &items[index];
                 let is_folder = is_local_lists && item.url.is_empty();
-                let selected = i == app.scroll.selected;
+                let in_items_view = app.navigation.view == View::Items;
+                let selected = in_items_view && i == app.scroll.selected;
 
                 let (icon, style) = if is_folder {
                     if selected {
@@ -197,13 +198,13 @@ fn render_items(
                     let is_downloaded = app.is_downloaded(&item.item);
                     let is_favorite = app.favorite.is_favorite(list, &item.item);
 
-                    match (selected, is_favorite, is_downloaded) {
-                        (true, true, _) => ("  ", styles.favorite_selected),
-                        (_, true, _) => ("  ", styles.favorite),
-                        (true, false, false) => ("  ", styles.selected),
-                        (true, false, true) => ("  ", styles.selected),
-                        (_, _, true) => ("  ", styles.normal),
-                        (_, _, _) => ("  ", styles.normal),
+                    match (selected, is_favorite, in_items_view, is_downloaded) {
+                        (true, true, true, _) => ("  ", styles.favorite_selected),
+                        (_, true, _, _) => ("  ", styles.favorite),
+                        (true, false, true, false) => ("  ", styles.selected),
+                        (true, false, true, true) => ("  ", styles.selected),
+                        (_, _, _, true) => ("  ", styles.normal),
+                        (_, _, _, _) => ("  ", styles.normal),
                     }
                 };
 
@@ -216,7 +217,8 @@ fn render_items(
             .enumerate()
             .map(|(i, item)| {
                 let is_folder = is_local_lists && item.url.is_empty();
-                let selected = i == app.scroll.selected;
+                let in_items_view = app.navigation.view == View::Items;
+                let selected = in_items_view && i == app.scroll.selected;
 
                 let (icon, style) = if is_folder {
                     if selected {
@@ -226,11 +228,10 @@ fn render_items(
                     }
                 } else {
                     let list = app.current_list_name();
-                    let in_list = app.navigation.view == View::Items;
                     let is_downloaded = app.is_downloaded(&item.item);
                     let is_favorite = app.favorite.is_favorite(list, &item.item);
 
-                    match (selected, is_favorite, in_list, is_downloaded) {
+                    match (selected, is_favorite, in_items_view, is_downloaded) {
                         (true, true, true, _) => ("  ", styles.favorite_selected),
                         (_, true, _, _) => ("  ", styles.favorite),
                         (true, false, true, false) => ("  ", styles.selected),
