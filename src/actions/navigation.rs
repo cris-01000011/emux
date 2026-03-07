@@ -24,6 +24,7 @@ pub struct Navigation {
     pub view: View,
     pub current_list_path: Option<PathBuf>,
     pub current_local_list_path: Option<PathBuf>,
+    pub current_local_list_root_name: Option<String>,
 }
 
 impl Navigation {
@@ -148,6 +149,11 @@ impl App {
         if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Lists {
             let selected = self.ui.lists.selected().unwrap_or_default();
             if let Some(local_list) = self.data.local_lists.get(selected) {
+                let root_name = local_list
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .map(|s| s.to_string());
+                self.navigation.current_local_list_root_name = root_name;
                 self.navigation.current_local_list_path = Some(local_list.clone());
                 self.navigation.view = View::Items;
                 let items = self.get_current_list_items();
@@ -220,6 +226,7 @@ impl App {
                 if let Some(root) = local_list_root {
                     if path == root {
                         self.navigation.current_local_list_path = None;
+                        self.navigation.current_local_list_root_name = None;
                         self.scroll.select_first();
                         self.scroll.total = 0;
                         self.navigation.view = View::Lists;
@@ -238,6 +245,7 @@ impl App {
                 }
             }
             self.navigation.current_local_list_path = None;
+            self.navigation.current_local_list_root_name = None;
             self.scroll.select_first();
             self.scroll.total = 0;
             self.navigation.view = View::Lists;

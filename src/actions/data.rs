@@ -181,6 +181,10 @@ impl App {
     }
 
     pub fn current_local_list_name(&self) -> &str {
+        if let Some(ref root_name) = self.navigation.current_local_list_root_name {
+            return root_name;
+        }
+
         let path = match &self.navigation.current_local_list_path {
             Some(p) => p,
             None => {
