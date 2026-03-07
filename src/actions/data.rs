@@ -117,7 +117,7 @@ impl App {
         }
 
         for local_list_path in &self.data.local_lists {
-            let size = self.calculate_list_downloaded_size(local_list_path);
+            let size = self.calculate_folder_size(local_list_path);
             self.data
                 .local_list_downloaded_sizes
                 .insert(local_list_path.to_path_buf(), size);
@@ -390,6 +390,86 @@ impl App {
         }
 
         0
+    }
+
+    pub fn get_current_local_folder_size(&self) -> u64 {
+        let path = match &self.navigation.current_local_list_path {
+            Some(p) => p.clone(),
+            None => {
+                let selected = self.ui.lists.selected().unwrap_or_default();
+                if let Some(local_list) = self.data.local_lists.get(selected) {
+                    return *self.data.local_list_downloaded_sizes.get(local_list).unwrap_or(&0);
+                } else {
+                    return 0;
+                }
+            }
+        };
+
+        if let Some(cached) = self.data.local_list_downloaded_sizes.get(&path) {
+            return *cached;
+        }
+
+        self.calculate_folder_size(&path)
+    }
+
+    pub fn calculate_folder_size(&self, path: &std::path::Path) -> u64 {
+        if !path.exists() {
+            return 0;
+        }
+
+        fs::read_dir(path)
+            .map(|rd| {
+                rd.filter_map(|e| e.ok())
+                    .filter_map(|e| {
+                        let metadata = e.metadata().ok()?;
+                        if metadata.is_file() {
+                            Some(metadata.len())
+                        } else if metadata.is_dir() {
+                            Some(self.calculate_folder_size(&e.path()))
+                        } else {
+                            None
+                        }
+                    })
+                    .sum()
+            })
+            .unwrap_or(0)
+    }
+
+    pub fn get_current_local_item_size(&self) -> u64 {
+        let selected_index = self.scroll.index_in_list();
+        
+        let item_index = if self.ui.input.active == InputActive::Search {
+            match self.search.items_query.get(selected_index) {
+                Some(idx) => *idx,
+                None => return 0,
+            }
+        } else {
+            selected_index
+        };
+
+        let items_vec = self.get_current_list_items();
+        let item = match items_vec.get(item_index) {
+            Some(item) => item,
+            None => return 0,
+        };
+
+        if item.url.is_empty() {
+            if let Some(path) = &self.navigation.current_local_list_path {
+                let folder_path = path.join(&item.item);
+                if folder_path.exists() {
+                    if let Some(cached) = self.data.local_list_downloaded_sizes.get(&folder_path) {
+                        return *cached;
+                    }
+                    return self.calculate_folder_size(&folder_path);
+                }
+            }
+            return 0;
+        }
+
+        let file_path = PathBuf::from(&item.url);
+        fs::metadata(&file_path)
+            .map(|m| m.len())
+            .unwrap_or(0)
     }
 
     pub fn refresh_current_list_size(&mut self) {

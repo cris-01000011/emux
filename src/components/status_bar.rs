@@ -1,11 +1,15 @@
 use ratatui::{
-    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
+    Frame,
 };
 
-use crate::{actions::navigation::View, app::App, components::inputs::search::render_search_input};
+use crate::{
+    actions::navigation::{ListsView, View},
+    app::App,
+    components::inputs::search::render_search_input,
+};
 
 pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
     let chunks = Layout::default()
@@ -15,9 +19,17 @@ pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
 
     render_search_input(app, frame, chunks[0]);
 
-    let downloaded_size_bytes = match app.navigation.view {
-        View::Lists => app.get_current_list_downloaded_size(),
-        View::Items => app.get_current_item_downloaded_size(),
+    let downloaded_size_bytes = if app.navigation.list_view == ListsView::LocalLists {
+        if app.navigation.view == View::Items {
+            app.get_current_local_item_size()
+        } else {
+            app.get_current_local_folder_size()
+        }
+    } else {
+        match app.navigation.view {
+            View::Lists => app.get_current_list_downloaded_size(),
+            View::Items => app.get_current_item_downloaded_size(),
+        }
     };
 
     let downloaded_size_gb = downloaded_size_bytes as f64 / (1024.0 * 1024.0 * 1024.0);
@@ -38,9 +50,13 @@ pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
             .fg(Color::Rgb(180, 190, 254)),
     );
 
-    let icon = match app.navigation.view {
-        View::Lists => " ",
-        View::Items => " ",
+    let icon = if app.navigation.list_view == ListsView::LocalLists {
+        "󰉋 "
+    } else {
+        match app.navigation.view {
+            View::Lists => " ",
+            View::Items => " ",
+        }
     };
 
     let icon_size = Span::styled(

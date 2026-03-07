@@ -167,6 +167,8 @@ impl App {
                     if new_path.exists() && new_path.is_dir() {
                         let new_items = self.load_local_list_items(&new_path);
                         self.data.items_in_local_list.insert(new_path.clone(), new_items);
+                        let folder_size = self.calculate_folder_size(&new_path);
+                        self.data.local_list_downloaded_sizes.insert(new_path.clone(), folder_size);
                         self.navigation.current_local_list_path = Some(new_path);
                         self.scroll.select_first();
                         let items = self.get_current_list_items();
