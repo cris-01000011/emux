@@ -32,9 +32,9 @@ impl App {
     pub fn init_lists(&mut self) {
         self.load_default_lists();
         self.load_all_list_items();
-        self.load_all_list_sizes();
         self.load_local_lists();
         self.load_all_local_list_items();
+        self.load_all_list_sizes();
 
         self.data.lists.sort();
         self.ui.lists.select_first();
