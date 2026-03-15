@@ -206,7 +206,15 @@ impl App {
 
     pub fn get_current_list_items(&self) -> Vec<ListItem> {
         if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
-            return self.get_current_local_list_items();
+            let items = self.get_current_local_list_items();
+            if self.favorite.in_favorites {
+                let list = self.current_list_name();
+                return items
+                    .into_iter()
+                    .filter(|item| self.favorite.is_favorite(list, &item.item))
+                    .collect();
+            }
+            return items;
         }
 
         if let Some(path) = &self.navigation.current_list_path
@@ -241,7 +249,12 @@ impl App {
                 }
             };
 
-            return self.data.items_in_local_list.get(&path).map(|v| v.as_slice()).unwrap_or(&[]);
+            return self
+                .data
+                .items_in_local_list
+                .get(&path)
+                .map(|v| v.as_slice())
+                .unwrap_or(&[]);
         }
 
         self.navigation
@@ -402,7 +415,11 @@ impl App {
             None => {
                 let selected = self.ui.lists.selected().unwrap_or_default();
                 if let Some(local_list) = self.data.local_lists.get(selected) {
-                    return *self.data.local_list_downloaded_sizes.get(local_list).unwrap_or(&0);
+                    return *self
+                        .data
+                        .local_list_downloaded_sizes
+                        .get(local_list)
+                        .unwrap_or(&0);
                 } else {
                     return 0;
                 }
@@ -441,7 +458,7 @@ impl App {
 
     pub fn get_current_local_item_size(&self) -> u64 {
         let selected_index = self.scroll.index_in_list();
-        
+
         let item_index = if self.ui.input.active == InputActive::Search {
             match self.search.items_query.get(selected_index) {
                 Some(idx) => *idx,
@@ -471,9 +488,7 @@ impl App {
         }
 
         let file_path = PathBuf::from(&item.url);
-        fs::metadata(&file_path)
-            .map(|m| m.len())
-            .unwrap_or(0)
+        fs::metadata(&file_path).map(|m| m.len()).unwrap_or(0)
     }
 
     pub fn refresh_current_list_size(&mut self) {

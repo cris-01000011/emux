@@ -5,7 +5,10 @@ use tokio_stream::StreamExt;
 
 use crate::components::popup::ActivePopup;
 use crate::utils::string::sanitize_filename;
-use crate::{actions::navigation::{ListsView, View}, app::App};
+use crate::{
+    actions::navigation::{ListsView, View},
+    app::App,
+};
 
 pub enum DownloadEvent {
     Progress {
@@ -101,7 +104,7 @@ async fn download_file_async(
 }
 
 impl App {
-    pub fn download_rom(&mut self) {
+    pub fn download_item(&mut self) {
         if self.navigation.view == View::Lists || self.get_current_list_items_count() == 0 {
             return;
         }
@@ -119,25 +122,25 @@ impl App {
         self.download.rx = Some(rx);
 
         let current_items = self.get_current_list_items();
-        let selected_rom = &current_items[self.scroll.index_in_list()];
+        let selected_item = &current_items[self.scroll.index_in_list()];
 
         let list = self.current_list_name();
         let download_dir = self.config.base_dir.join("downloads").join(list);
         let _ = fs::create_dir_all(&download_dir);
 
-        let clean_title = sanitize_filename(&selected_rom.item);
-        let rom_path = download_dir.join(&clean_title);
+        let clean_title = sanitize_filename(&selected_item.item);
+        let item_path = download_dir.join(&clean_title);
 
-        let url = selected_rom.url.clone();
-        let rom_path_clone = rom_path.clone();
+        let url = selected_item.url.clone();
+        let item_path_clone = item_path.clone();
 
-        if rom_path_clone.exists() {
+        if item_path_clone.exists() {
             return self.execute_command();
         }
 
         self.ui.popup.open(ActivePopup::Downloading);
 
-        tokio::spawn(async move { download_file_async(url, rom_path_clone, tx).await });
+        tokio::spawn(async move { download_file_async(url, item_path_clone, tx).await });
     }
 
     pub fn execute_command(&mut self) {
@@ -158,7 +161,7 @@ impl App {
         }
 
         let current_items = self.get_current_list_items();
-        let selected_rom = &current_items[self.scroll.index_in_list()];
+        let selected_item = &current_items[self.scroll.index_in_list()];
 
         let selected_command = &self.commands.lists[self.commands.selected_list].commands
             [self.commands.selected_command];
@@ -166,39 +169,22 @@ impl App {
         let base_dir = &self.config.base_dir;
 
         let list = self.current_list_name();
-        let download_dir = base_dir.join("downloads").join(list);
 
-        let clean_title = sanitize_filename(&selected_rom.item);
-        let rom_path = if self.navigation.list_view == ListsView::LocalLists {
-            PathBuf::from(&selected_rom.url)
+        let scripts_path = format!("{}/scripts", &base_dir.to_string_lossy());
+
+        let download_dir = base_dir.join("downloads").join(list);
+        let clean_title = sanitize_filename(&selected_item.item);
+        let item_path = if self.navigation.list_view == ListsView::LocalLists {
+            PathBuf::from(&selected_item.url)
         } else {
             download_dir.join(&clean_title)
         };
-        let game_downloaded = rom_path.to_string_lossy();
 
-        let retroarch_path = format!(
-            "'{}/programs/retroarch/RetroArch-Linux-x86_64.AppImage'",
-            &base_dir.to_string_lossy()
-        );
-
-        let duckstation_path = format!(
-            "'{}/programs/duckstation/DuckStation-x64.AppImage'",
-            &base_dir.to_string_lossy()
-        );
-
-        let ppsspp_app = format!(
-            "'{}/programs/ppsspp/PPSSPP-v1.19.3-anylinux-x86_64.AppImage'",
-            &base_dir.to_string_lossy()
-        );
-
-        let ppsspp_path = format!("'{}/programs/ppsspp'", &base_dir.to_string_lossy());
+        let item_downloaded = item_path.to_string_lossy();
 
         let mut command_str = selected_command.command.clone();
-        command_str = command_str.replace("$RETROARCH", &retroarch_path);
-        command_str = command_str.replace("$DUCKSTATION", &duckstation_path);
-        command_str = command_str.replace("$PPSSPP_PATH", &ppsspp_path);
-        command_str = command_str.replace("$PPSSPP", &ppsspp_app);
-        command_str = command_str.replace("$GAME_DOWNLOADED", &game_downloaded);
+        command_str = command_str.replace("$SCRIPTS", &scripts_path);
+        command_str = command_str.replace("$ITEM_DOWNLOADED", &item_downloaded);
         command_str.push_str(" >/dev/null 2>&1 &");
 
         #[cfg(unix)]

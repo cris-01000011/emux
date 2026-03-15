@@ -146,7 +146,8 @@ impl App {
     }
 
     pub fn open_list(&mut self) {
-        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Lists {
+        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Lists
+        {
             let selected = self.ui.lists.selected().unwrap_or_default();
             if let Some(local_list) = self.data.local_lists.get(selected) {
                 let root_name = local_list
@@ -163,7 +164,8 @@ impl App {
             return;
         }
 
-        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Items {
+        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Items
+        {
             let selected_index = self.scroll.index_in_list();
             let items = self.get_current_list_items();
             if let Some(item) = items.get(selected_index) {
@@ -172,9 +174,13 @@ impl App {
                     let new_path = current_path.join(&item.item);
                     if new_path.exists() && new_path.is_dir() {
                         let new_items = self.load_local_list_items(&new_path);
-                        self.data.items_in_local_list.insert(new_path.clone(), new_items);
+                        self.data
+                            .items_in_local_list
+                            .insert(new_path.clone(), new_items);
                         let folder_size = self.calculate_folder_size(&new_path);
-                        self.data.local_list_downloaded_sizes.insert(new_path.clone(), folder_size);
+                        self.data
+                            .local_list_downloaded_sizes
+                            .insert(new_path.clone(), folder_size);
                         self.navigation.current_local_list_path = Some(new_path);
                         self.scroll.select_first();
                         let items = self.get_current_list_items();
@@ -199,18 +205,19 @@ impl App {
             return;
         }
 
-        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Items {
+        if self.navigation.list_view == ListsView::LocalLists && self.navigation.view == View::Items
+        {
             let selected_index = self.scroll.index_in_list();
             let items = self.get_current_list_items();
             if let Some(item) = items.get(selected_index) {
                 if !item.url.is_empty() {
-                    self.download_rom();
+                    self.download_item();
                 }
             }
             return;
         }
 
-        self.download_rom()
+        self.download_item()
     }
 
     pub fn go_back(&mut self) {
@@ -233,7 +240,7 @@ impl App {
                         self.reload_data();
                         return;
                     }
-                    
+
                     if let Some(parent) = path.parent() {
                         self.navigation.current_local_list_path = Some(parent.to_path_buf());
                         self.scroll.select_first();

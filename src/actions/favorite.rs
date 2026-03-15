@@ -83,6 +83,10 @@ impl App {
         self.scroll.select_first();
 
         self.favorite.in_favorites = !self.favorite.in_favorites;
+        
+        let items = self.get_current_list_items();
+        self.scroll.total = items.len();
+        
         self.reload_data();
     }
 }

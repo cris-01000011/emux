@@ -1,9 +1,9 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, List, ListItem, Padding},
-    Frame,
 };
 
 use crate::{
@@ -83,14 +83,14 @@ impl ItemsStyles {
             selected: Style::default()
                 .fg(Color::Black)
                 .bg(Color::Rgb(180, 190, 254)),
-            favorite: Style::default().fg(Color::Rgb(245, 194, 231)),
+            favorite: Style::default().fg(Color::Rgb(137, 220, 235)),
             favorite_selected: Style::default()
                 .fg(Color::Black)
-                .bg(Color::Rgb(245, 194, 231)),
-            folder: Style::default().fg(Color::Rgb(139, 233, 253)),
+                .bg(Color::Rgb(137, 220, 235)),
+            folder: Style::default().fg(Color::Rgb(137, 180, 250)),
             folder_selected: Style::default()
                 .fg(Color::Black)
-                .bg(Color::Rgb(139, 233, 253)),
+                .bg(Color::Rgb(137, 180, 250)),
         }
     }
 }
@@ -160,7 +160,11 @@ fn render_items(
 
     let is_local_lists = app.navigation.list_view == ListsView::LocalLists;
 
-    let items = app.get_current_list_items_slice();
+    let items = if app.favorite.in_favorites {
+        app.get_current_list_items()
+    } else {
+        app.get_current_list_items_slice().to_vec()
+    };
 
     let total = if app.ui.input.active == InputActive::Search
         && !app.ui.input.search.value().is_empty()
@@ -192,6 +196,19 @@ fn render_items(
                         (" 󰉋 ", styles.folder_selected)
                     } else {
                         (" 󰉋 ", styles.folder)
+                    }
+                } else if is_local_lists {
+                    let list = app.current_list_name();
+                    let is_downloaded = app.is_downloaded(&item.item);
+                    let is_favorite = app.favorite.is_favorite(list, &item.item);
+
+                    match (selected, is_favorite, in_items_view, is_downloaded) {
+                        (true, true, true, _) => ("  ", styles.favorite_selected),
+                        (_, true, _, _) => ("  ", styles.favorite),
+                        (true, false, true, false) => (" 󰈔 ", styles.selected),
+                        (true, false, true, true) => ("  ", styles.selected),
+                        (_, _, _, true) => ("  ", styles.normal),
+                        (_, _, _, _) => (" 󰈔 ", styles.normal),
                     }
                 } else {
                     let list = app.current_list_name();
@@ -225,6 +242,19 @@ fn render_items(
                         (" 󰉋 ", styles.folder_selected)
                     } else {
                         (" 󰉋 ", styles.folder)
+                    }
+                } else if is_local_lists {
+                    let list = app.current_list_name();
+                    let is_downloaded = app.is_downloaded(&item.item);
+                    let is_favorite = app.favorite.is_favorite(list, &item.item);
+
+                    match (selected, is_favorite, in_items_view, is_downloaded) {
+                        (true, true, true, _) => ("  ", styles.favorite_selected),
+                        (_, true, _, _) => ("  ", styles.favorite),
+                        (true, false, true, false) => (" 󰈔 ", styles.selected),
+                        (true, false, true, true) => ("  ", styles.selected),
+                        (_, _, _, true) => ("  ", styles.normal),
+                        (_, _, _, _) => (" 󰈔 ", styles.normal),
                     }
                 } else {
                     let list = app.current_list_name();
