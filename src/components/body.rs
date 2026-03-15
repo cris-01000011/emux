@@ -160,10 +160,10 @@ fn render_items(
 
     let is_local_lists = app.navigation.list_view == ListsView::LocalLists;
 
-    let items = if app.favorite.in_favorites {
-        app.get_current_list_items()
+    let items: &[crate::actions::data::ListItem] = if app.favorite.in_favorites {
+        &app.get_current_list_items()
     } else {
-        app.get_current_list_items_slice().to_vec()
+        app.get_current_list_items_slice()
     };
 
     let total = if app.ui.input.active == InputActive::Search

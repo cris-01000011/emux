@@ -205,46 +205,38 @@ impl App {
     }
 
     pub fn get_current_list_items(&self) -> Vec<ListItem> {
-        if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
-            let items = self.get_current_local_list_items();
-            if self.favorite.in_favorites {
-                let list = self.current_list_name();
-                return items
-                    .into_iter()
-                    .filter(|item| self.favorite.is_favorite(list, &item.item))
-                    .collect();
-            }
+        let items: Vec<ListItem> =
+            if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
+                self.get_current_local_list_items()
+            } else if let Some(path) = &self.navigation.current_list_path
+                && let Some(items) = self.data.items_in_list.get(path)
+            {
+                items.clone()
+            } else {
+                Vec::new()
+            };
+
+        if !self.favorite.in_favorites {
             return items;
         }
 
-        if let Some(path) = &self.navigation.current_list_path
-            && let Some(items) = self.data.items_in_list.get(path)
-        {
-            if self.favorite.in_favorites {
-                let list = self.current_list_name();
-                items
-                    .iter()
-                    .filter(|item| self.favorite.is_favorite(list, &item.item))
-                    .cloned()
-                    .collect()
-            } else {
-                items.clone()
-            }
-        } else {
-            Vec::new()
-        }
+        let list = self.current_list_name();
+
+        items
+            .into_iter()
+            .filter(|item| self.favorite.is_favorite(list, &item.item))
+            .collect()
     }
 
     pub fn get_current_list_items_slice(&self) -> &[ListItem] {
         if self.navigation.list_view == crate::actions::navigation::ListsView::LocalLists {
             let path = match &self.navigation.current_local_list_path {
-                Some(p) => p.clone(),
+                Some(p) => p,
                 None => {
                     let selected = self.ui.lists.selected().unwrap_or_default();
-                    if let Some(local_list) = self.data.local_lists.get(selected) {
-                        local_list.clone()
-                    } else {
-                        return &[];
+                    match self.data.local_lists.get(selected) {
+                        Some(local_list) => local_list,
+                        None => return &[],
                     }
                 }
             };
@@ -252,7 +244,7 @@ impl App {
             return self
                 .data
                 .items_in_local_list
-                .get(&path)
+                .get(path)
                 .map(|v| v.as_slice())
                 .unwrap_or(&[]);
         }
