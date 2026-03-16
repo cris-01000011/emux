@@ -505,7 +505,7 @@ impl App {
             selected
         };
 
-        let items = self.get_current_list_items();
+        let items = self.get_current_list_items_slice();
         let item = match items.get(item_index) {
             Some(item) => item,
             None => return 0,

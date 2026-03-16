@@ -157,7 +157,7 @@ impl App {
                 self.navigation.current_local_list_root_name = root_name;
                 self.navigation.current_local_list_path = Some(local_list.clone());
                 self.navigation.view = View::Items;
-                let items = self.get_current_list_items();
+                let items = self.get_current_list_items_slice();
                 self.scroll.total = items.len();
                 self.load_current_commands();
             }
@@ -194,7 +194,7 @@ impl App {
         }
 
         self.navigation.view = View::Items;
-        let items = self.get_current_list_items();
+        let items = self.get_current_list_items_slice();
         self.scroll.total = items.len();
         self.load_current_commands();
     }
