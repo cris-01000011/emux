@@ -79,7 +79,7 @@ impl App {
 
                     self.scroll.start = (saved - self.scroll.visible) + self.scroll.visible / 2;
                     self.scroll.end = saved + self.scroll.visible / 2;
-                    self.scroll.selected = self.scroll.end - saved;
+                    self.scroll.selected = self.scroll.end - saved + (self.scroll.visible % 2);
                 }
             }
         }
