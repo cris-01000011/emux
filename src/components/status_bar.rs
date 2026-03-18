@@ -1,8 +1,8 @@
 use ratatui::{
+    Frame,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    Frame,
 };
 
 use crate::{
@@ -75,7 +75,12 @@ pub fn render_status_bar(app: &App, frame: &mut Frame, area: Rect) {
             .fg(Color::Rgb(249, 226, 175)),
     );
 
-    let label_buf = Span::raw("  Lists  ").style(
+    let text = match app.navigation.list_view {
+        ListsView::Lists => "  Lists  ",
+        ListsView::LocalLists => "  Local  ",
+    };
+
+    let label_buf = Span::raw(text).style(
         Style::default()
             .bg(Color::Rgb(249, 226, 175))
             .fg(Color::Rgb(24, 24, 37)),

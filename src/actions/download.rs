@@ -170,7 +170,7 @@ impl App {
 
         let list = self.current_list_name();
 
-        let scripts_path = format!("{}/scripts", &base_dir.to_string_lossy());
+        let app_path = format!("{}", &base_dir.to_string_lossy());
 
         let download_dir = base_dir.join("downloads").join(list);
         let clean_title = sanitize_filename(&selected_item.item);
@@ -180,11 +180,11 @@ impl App {
             download_dir.join(&clean_title)
         };
 
-        let item_downloaded = item_path.to_string_lossy();
+        let item_path = item_path.to_string_lossy();
 
         let mut command_str = selected_command.command.clone();
-        command_str = command_str.replace("$SCRIPTS", &scripts_path);
-        command_str = command_str.replace("$ITEM_DOWNLOADED", &item_downloaded);
+        command_str = command_str.replace("$EMUX", &app_path);
+        command_str = command_str.replace("$ITEM", &item_path);
         command_str.push_str(" >/dev/null 2>&1 &");
 
         #[cfg(unix)]

@@ -62,9 +62,9 @@ Lists are stored as JSON files in the `lists/` directory. Each list should follo
 
 You can create new lists from within the app by pressing `n`, or manually add JSON files to the `lists/` directory.
 
-> Pressing `n` in the app opens a popup where you must enter a list name and a URL.  
-> The app will then scrape the provided webpage, automatically searching for `<a>` tags that link to files ending with:  
-> `[".zip", ".chd", ".iso", ".7z", ".rar"]`
+Pressing `n` in the app opens a popup where you must enter a list name and a URL.  
+The app will then scrape the provided webpage, automatically searching for `<a>` tags that link to files ending with:  
+`[".zip", ".chd", ".iso", ".7z", ".rar"]`
 
 ## List commands format
 
@@ -76,19 +76,19 @@ lists_commands.json should follow this format:
     "commands": [
       {
         "name": "N64",
-        "command": "@EMUX/scripts/n64.bash @ITEM"
+        "command": "$EMUX/scripts/n64.bash $ITEM"
       },
       {
         "name": "Mupen64Plus-Next",
-        "command": "@EMUX/programs/retroarch.appimage --libretro mupen64plus_next -- @ITEM"
+        "command": "$EMUX/programs/retroarch.appimage --libretro mupen64plus_next -- $ITEM"
       }
     ]
   }
 ]
 ```
 
-> `@EMUX` and `@ITEM` are placeholders that will be replaced at runtime by:  
-> The Emux base directory and the route of the current item, respectively.
+`$EMUX` and `$ITEM` are placeholders that will be replaced at runtime by:  
+The Emux base directory and the route of the current item, respectively.
 
 ## Usage
 
