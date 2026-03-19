@@ -1,8 +1,8 @@
 # Emux
 
 A TUI application for launching URL-based lists and local files using custom commands
-<img width="1366" height="768" alt="preview" src="./assets/preview.png" />
 
+![Made with VHS](https://vhs.charm.sh/vhs-1S3ybYB6iDsonYGr9yqYDi.gif)
 
 ## Installation
 
@@ -112,3 +112,13 @@ The Emux base directory and the route of the current item, respectively.
 - `g` - Go to first item
 - `G` - Go to last item
 - `q` - Quit app
+
+## Disclaimer
+
+**Emux does not provide, host, distribute, or include any ROMs, game files, BIOS files, or copyrighted content.**
+
+This application is intended only as a frontend / launcher for software that the user already owns legally. Users are fully responsible for obtaining their own game files from legitimate sources.
+
+The developer of emux does **not** provide links to ROM websites, does not promote piracy, and does not support the illegal distribution of copyrighted material.
+
+By using this application, you agree that you will only use legally obtained content and that you are solely responsible for how you use the software.
