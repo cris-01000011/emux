@@ -522,12 +522,12 @@ impl App {
     }
 
     pub fn is_downloaded(&self, item_name: &str) -> bool {
-        if let Some(path) = &self.navigation.current_list_path
-            && let Some(downloaded) = self.data.downloaded_items.get(path)
-        {
-            let clean_filename = sanitize_filename(item_name);
-            return downloaded.contains(&clean_filename);
-        }
-        false
+        let clean_filename = sanitize_filename(item_name);
+
+        self.navigation
+            .current_list_path
+            .as_ref()
+            .and_then(|path| self.data.downloaded_items.get(path))
+            .is_some_and(|downloaded| downloaded.contains(&clean_filename))
     }
 }
