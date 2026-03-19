@@ -22,3 +22,9 @@ url = "2.5.8"
 scraper = "0.25.0"
 tokio-util = "0.7.18"
 futures = "0.3.32"
+
+[profile.release]
+codegen-units = 1 # Allows compiler to perform better optimization.
+lto = true # Enables Link-time Optimization.
+opt-level = "s" # Prioritizes small binary size. Use `3` if you prefer speed.
+strip = true # Ensures debug symbols are removed.
