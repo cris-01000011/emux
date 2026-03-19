@@ -2,7 +2,7 @@
 
 A TUI application for launching URL-based lists and local files using custom commands
 
-![Made with VHS](https://vhs.charm.sh/vhs-1S3ybYB6iDsonYGr9yqYDi.gif)
+![Made with VHS](https://vhs.charm.sh/vhs-73i6YTX6Sg7EfOUXsVLjI7.gif)
 
 ## Installation
 
