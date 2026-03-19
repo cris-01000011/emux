@@ -466,17 +466,15 @@ impl App {
             None => return 0,
         };
 
-        if item.url.is_empty() {
-            if let Some(path) = &self.navigation.current_local_list_path {
-                let folder_path = path.join(&item.item);
-                if folder_path.exists() {
-                    if let Some(cached) = self.data.local_list_downloaded_sizes.get(&folder_path) {
-                        return *cached;
-                    }
-                    return self.calculate_folder_size(&folder_path);
-                }
+        if item.url.is_empty()
+            && let Some(path) = &self.navigation.current_local_list_path
+            && let folder_path = path.join(&item.item)
+            && folder_path.exists()
+        {
+            if let Some(cached) = self.data.local_list_downloaded_sizes.get(&folder_path) {
+                return *cached;
             }
-            return 0;
+            return self.calculate_folder_size(&folder_path);
         }
 
         let file_path = PathBuf::from(&item.url);
@@ -524,11 +522,11 @@ impl App {
     }
 
     pub fn is_downloaded(&self, item_name: &str) -> bool {
-        if let Some(path) = &self.navigation.current_list_path {
-            if let Some(downloaded) = self.data.downloaded_items.get(path) {
-                let clean_filename = sanitize_filename(item_name);
-                return downloaded.contains(&clean_filename);
-            }
+        if let Some(path) = &self.navigation.current_list_path
+            && let Some(downloaded) = self.data.downloaded_items.get(path)
+        {
+            let clean_filename = sanitize_filename(item_name);
+            return downloaded.contains(&clean_filename);
         }
         false
     }

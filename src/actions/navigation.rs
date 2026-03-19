@@ -168,26 +168,24 @@ impl App {
         {
             let selected_index = self.scroll.index_in_list();
             let items = self.get_current_list_items();
-            if let Some(item) = items.get(selected_index) {
-                if item.url.is_empty() {
-                    let current_path = self.navigation.current_local_list_path.as_ref().unwrap();
-                    let new_path = current_path.join(&item.item);
-                    if new_path.exists() && new_path.is_dir() {
-                        let new_items = self.load_local_list_items(&new_path);
-                        self.data
-                            .items_in_local_list
-                            .insert(new_path.clone(), new_items);
-                        let folder_size = self.calculate_folder_size(&new_path);
-                        self.data
-                            .local_list_downloaded_sizes
-                            .insert(new_path.clone(), folder_size);
-                        self.navigation.current_local_list_path = Some(new_path);
-                        self.scroll.select_first();
-                        let items = self.get_current_list_items();
-                        self.scroll.total = items.len();
-                        self.load_current_commands();
-                        return;
-                    }
+            if let Some(item) = items.get(selected_index) && item.url.is_empty() {
+                let current_path = self.navigation.current_local_list_path.as_ref().unwrap();
+                let new_path = current_path.join(&item.item);
+                if new_path.exists() && new_path.is_dir() {
+                    let new_items = self.load_local_list_items(&new_path);
+                    self.data
+                        .items_in_local_list
+                        .insert(new_path.clone(), new_items);
+                    let folder_size = self.calculate_folder_size(&new_path);
+                    self.data
+                        .local_list_downloaded_sizes
+                        .insert(new_path.clone(), folder_size);
+                    self.navigation.current_local_list_path = Some(new_path);
+                    self.scroll.select_first();
+                    let items = self.get_current_list_items();
+                    self.scroll.total = items.len();
+                    self.load_current_commands();
+                    return;
                 }
             }
             return;
@@ -209,10 +207,8 @@ impl App {
         {
             let selected_index = self.scroll.index_in_list();
             let items = self.get_current_list_items();
-            if let Some(item) = items.get(selected_index) {
-                if !item.url.is_empty() {
-                    self.download_item();
-                }
+            if let Some(item) = items.get(selected_index) && !item.url.is_empty() {
+                self.download_item();
             }
             return;
         }
@@ -223,9 +219,7 @@ impl App {
     pub fn go_back(&mut self) {
         if self.navigation.view == View::Lists {
             return;
-        }
-
-        if self.navigation.list_view == ListsView::LocalLists {
+        } else if self.navigation.list_view == ListsView::LocalLists {
             let current_path = self.navigation.current_local_list_path.as_ref();
             if let Some(path) = current_path {
                 let selected = self.ui.lists.selected().unwrap_or_default();
