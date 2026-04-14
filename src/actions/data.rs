@@ -494,6 +494,12 @@ impl App {
     pub fn get_current_item_downloaded_size(&self) -> u64 {
         let selected = self.scroll.index_in_list();
 
+        let items: Vec<ListItem> = if self.favorite.in_favorites {
+            self.get_current_list_items()
+        } else {
+            self.get_current_list_items_slice().to_vec()
+        };
+
         let item_index = if self.ui.input.active == InputActive::Search {
             match self.search.items_query.get(selected) {
                 Some(idx) => *idx,
@@ -503,7 +509,6 @@ impl App {
             selected
         };
 
-        let items = self.get_current_list_items_slice();
         let item = match items.get(item_index) {
             Some(item) => item,
             None => return 0,
