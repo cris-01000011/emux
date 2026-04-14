@@ -25,7 +25,7 @@ pub fn render_new_list_url_input(app: &App, frame: &mut Frame, area: Rect) {
     let scroll = app.ui.input.new_list_url.visual_scroll(width as usize);
 
     let input_value = match app.ui.input.new_list_url.value().is_empty() {
-        true => "URL",
+        true => "Curl",
         false => app.ui.input.new_list_url.value(),
     };
 

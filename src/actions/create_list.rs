@@ -1,11 +1,10 @@
 use std::path::PathBuf;
 
-use reqwest::Client;
-use scraper::{Html, Selector};
 use serde::Serialize;
+use tokio::process::Command;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use url::Url;
+use urlencoding;
 
 use crate::app::App;
 
@@ -35,67 +34,51 @@ pub struct CreateList {
 
 async fn create_list_async(
     input_name: String,
-    input_url: String,
+    curl_args: String,
     tx: UnboundedSender<CreateListEvent>,
     lists_dir: String,
 ) {
-    let client = Client::new();
-    let html = match client.get(&input_url).send().await {
-        Ok(r) => r,
+    let output = Command::new("sh")
+        .args(["-c", &format!("curl {}", curl_args)])
+        .output()
+        .await;
+
+    let output = match output {
+        Ok(o) => o,
         Err(_) => {
             let _ = tx.send(CreateListEvent::Error);
             return;
         }
     };
 
-    let html = match html.text().await {
-        Ok(h) => h,
-        Err(_) => {
-            let _ = tx.send(CreateListEvent::Error);
-            return;
-        }
-    };
-
-    let document = Html::parse_document(&html);
-    let selector = Selector::parse("a").unwrap();
-
-    let base = match Url::parse(&input_url) {
-        Ok(b) => b,
-        Err(_) => {
-            let _ = tx.send(CreateListEvent::Error);
-            return;
-        }
-    };
-
-    let mut items = Vec::new();
-    let elements: Vec<_> = document.select(&selector).collect();
-    let total = elements.len();
-
+    let stdout = String::from_utf8_lossy(&output.stdout);
     let include: Vec<&str> = vec![".zip", ".chd", ".iso", ".7z", ".rar"];
 
-    for (current, element) in elements.into_iter().enumerate() {
-        let text = element
-            .text()
-            .collect::<Vec<_>>()
-            .join(" ")
-            .trim()
-            .to_string();
+    let lines: Vec<&str> = stdout.lines().collect();
+    let total = lines.len();
 
-        if text.is_empty() {
+    let mut items = Vec::new();
+
+    for (current, line) in lines.iter().enumerate() {
+        let line = line.trim();
+
+        if line.is_empty() {
             continue;
         }
 
-        if let Some(href) = element.value().attr("href")
-            && let Ok(full_url) = base.join(href)
-        {
-            let url_str = full_url.as_str().to_lowercase();
+        let url_lower = line.to_lowercase();
 
-            if include.iter().any(|ext| url_str.ends_with(ext)) {
-                items.push(LinkItem {
-                    item: text,
-                    url: full_url.to_string(),
-                });
-            }
+        if include.iter().any(|ext| url_lower.ends_with(ext)) {
+            let decode = urlencoding::decode(line)
+                .unwrap_or_else(|_| line.into())
+                .into_owned();
+
+            let item = decode.rsplit('/').next().unwrap_or(&decode).to_string();
+
+            items.push(LinkItem {
+                item,
+                url: line.to_string(),
+            });
         }
 
         let _ = tx.send(CreateListEvent::Progress {
@@ -127,9 +110,9 @@ async fn create_list_async(
 impl App {
     pub fn create_list(&mut self) {
         let input_name = self.ui.input.new_list_name.value();
-        let input_url = self.ui.input.new_list_url.value();
+        let curl_args = self.ui.input.new_list_url.value();
 
-        if input_name.is_empty() || input_url.is_empty() {
+        if input_name.is_empty() || curl_args.is_empty() {
             return;
         }
 
@@ -143,10 +126,10 @@ impl App {
 
         let lists_dir = self.config.lists_dir.to_string_lossy().to_string();
         let input_name = input_name.to_string();
-        let input_url = input_url.to_string();
+        let curl_args = curl_args.to_string();
 
         tokio::spawn(async move {
-            create_list_async(input_name, input_url, tx, lists_dir).await;
+            create_list_async(input_name, curl_args, tx, lists_dir).await;
         });
     }
 }

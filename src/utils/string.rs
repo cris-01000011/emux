@@ -1,7 +1,13 @@
 pub fn sanitize_filename(filename: &str) -> String {
-    filename
-        .replace(['\'', '\"'], "")
-        .replace(['/', '\\', ':', '*', '?', '<', '>', '|'], "_")
+    let mut result = String::with_capacity(filename.len());
+    for c in filename.chars() {
+        match c {
+            '\'' | '"' => continue,
+            '/' | '\\' | ':' | '*' | '?' | '<' | '>' | '|' => result.push('_'),
+            _ => result.push(c),
+        }
+    }
+    result
 }
 
 pub fn extract_list_name(path: &std::path::Path) -> String {

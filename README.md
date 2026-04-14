@@ -37,12 +37,15 @@ Emux/
 ├── lists/                # ITEM lists (JSON format)
 │   ├── list.json
 │   └── ...
+├── lists-configs/        # per-list configuration
+│   └── [list]/           # (same name as the JSON file)
+│       └── cookies.txt   # cookies for authenticated downloads (optional)
 ├── local/                # local files
 │   ├── path/
-│   ├── file.[extension]
+│   ├── file.[ext]
 │   └── ...
 └── system-lists/         # system-managed lists
-│   └── favorites.json
+    └── favorites.json
 └── lists_commands.json   # commands of lists
 ```
 
@@ -62,9 +65,30 @@ Lists are stored as JSON files in the `lists/` directory. Each list should follo
 
 You can create new lists from within the app by pressing `n`, or manually add JSON files to the `lists/` directory.
 
-Pressing `n` in the app opens a popup where you must enter a list name and a URL.  
-The app will then scrape the provided webpage, automatically searching for `<a>` tags that link to files ending with:  
-`[".zip", ".chd", ".iso", ".7z", ".rar"]`
+Pressing `n` opens a popup where you must enter a list name and curl arguments.
+The app executes `curl <args>` and uses the stdout output (one URL per line) to create the list.
+Only lines ending with: `[".zip", ".chd", ".iso", ".7z", ".rar"]` are included.
+
+Example curl valid output:
+```
+https://example.com/game-1.zip
+https://example.com/game-2.zip
+```
+
+### Cookies for Downloads
+
+Some sites require authentication. To use cookies when downloading from a specific list:
+
+1. Export cookies from your browser in **Netscape/Mozilla format**
+2. Place the cookies file at: `EMUX/lists-configs/[list]/cookies.txt`
+
+Format (cookies.txt):
+```
+# Netscape HTTP Cookie File
+.archive.org	TRUE	/	FALSE	0	cookie-name	cookie-value
+```
+
+The app will automatically use these cookies when downloading from that list.
 
 ## List commands format
 
@@ -76,11 +100,11 @@ lists_commands.json should follow this format:
     "commands": [
       {
         "name": "N64",
-        "command": "$EMUX/scripts/n64.bash $ITEM"
+        "command": "$EMUX/scripts/n64.bash \"$ITEM\""
       },
       {
         "name": "Mupen64Plus-Next",
-        "command": "$EMUX/programs/retroarch.appimage --libretro mupen64plus_next -- $ITEM"
+        "command": "$EMUX/programs/retroarch.appimage --libretro mupen64plus_next -- \"$ITEM\""
       }
     ]
   }

@@ -1,7 +1,7 @@
+use std::path::Path;
 use std::{fs, path::PathBuf, process::Command};
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::{io::AsyncWriteExt, sync::mpsc};
-use tokio_stream::StreamExt;
+
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 use crate::components::popup::ActivePopup;
 use crate::utils::string::sanitize_filename;
@@ -11,7 +11,7 @@ use crate::{
 };
 
 pub enum DownloadEvent {
-    Progress {
+    _Progress {
         percent: f64,
         downloaded: u64,
         total: u64,
@@ -28,79 +28,43 @@ pub struct Download {
     pub total: u64,
 }
 
+fn get_cookies_path(list_name: &str, base_dir: &Path) -> Option<PathBuf> {
+    let config_path = base_dir
+        .join("lists-configs")
+        .join(list_name)
+        .join("cookies.txt");
+
+    if config_path.exists() {
+        Some(config_path)
+    } else {
+        None
+    }
+}
+
 async fn download_file_async(
     url: String,
     destination: PathBuf,
     tx: UnboundedSender<DownloadEvent>,
+    cookies_path: Option<PathBuf>,
 ) {
-    let client = reqwest::Client::new();
+    let mut cmd = tokio::process::Command::new("curl");
 
-    let response = match client.get(&url).send().await {
-        Ok(r) => r,
-        Err(_) => {
-            let _ = tx.send(DownloadEvent::Error);
-            return;
-        }
-    };
+    cmd.arg("-L").arg("-o").arg(&destination).arg(&url);
 
-    let total_size = response.content_length();
-    let mut downloaded: u64 = 0;
-    let mut last_progress_update: u64 = 0;
-    const PROGRESS_UPDATE_INTERVAL: u64 = 1024 * 1024;
-
-    let mut file = match tokio::fs::File::create(&destination).await {
-        Ok(f) => f,
-        Err(_) => {
-            let _ = tx.send(DownloadEvent::Error);
-            return;
-        }
-    };
-
-    let mut stream = response.bytes_stream();
-
-    while let Some(chunk) = stream.next().await {
-        let chunk = match chunk {
-            Ok(c) => c,
-            Err(_) => {
-                let _ = tx.send(DownloadEvent::Error);
-                return;
-            }
-        };
-
-        if file.write_all(&chunk).await.is_err() {
-            let _ = tx.send(DownloadEvent::Error);
-            return;
-        }
-
-        downloaded += chunk.len() as u64;
-
-        if downloaded >= last_progress_update + PROGRESS_UPDATE_INTERVAL {
-            let percent = match total_size {
-                Some(total) if total > 0 => (downloaded as f64 / total as f64).clamp(0.0, 1.0),
-                _ => 0.0,
-            };
-
-            let _ = tx.send(DownloadEvent::Progress {
-                percent,
-                downloaded,
-                total: total_size.unwrap_or(0),
-            });
-            last_progress_update = downloaded;
-        }
+    if let Some(cookie_file) = cookies_path {
+        cmd.arg("-b").arg(cookie_file);
     }
 
-    let percent = match total_size {
-        Some(total) if total > 0 => (downloaded as f64 / total as f64).clamp(0.0, 1.0),
-        _ => 1.0,
-    };
+    let output = cmd.output().await;
 
-    let _ = tx.send(DownloadEvent::Progress {
-        percent,
-        downloaded,
-        total: total_size.unwrap_or(0),
-    });
-
-    let _ = tx.send(DownloadEvent::Finished);
+    match output {
+        Ok(o) if o.status.success() => {
+            let _ = tx.send(DownloadEvent::Finished);
+        }
+        _ => {
+            let _ = tx.send(DownloadEvent::Error);
+        }
+    }
 }
 
 impl App {
@@ -133,14 +97,18 @@ impl App {
 
         let url = selected_item.url.clone();
         let item_path_clone = item_path.clone();
+        let list_name = list.to_string();
+        let base_dir = self.config.base_dir.clone();
 
         if item_path_clone.exists() {
             return self.execute_command();
         }
 
-        self.ui.popup.open(ActivePopup::Downloading);
+        let cookies_path = get_cookies_path(&list_name, &base_dir);
 
-        tokio::spawn(async move { download_file_async(url, item_path_clone, tx).await });
+        tokio::spawn(
+            async move { download_file_async(url, item_path_clone, tx, cookies_path).await },
+        );
     }
 
     pub fn execute_command(&mut self) {

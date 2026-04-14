@@ -83,7 +83,7 @@ impl App {
                         .and_then(|rx| rx.try_recv().ok())
                 } => {
                     match event {
-                        DownloadEvent::Progress { percent, downloaded, total } => {
+                        DownloadEvent::_Progress { percent, downloaded, total } => {
                             let p = (percent * 100.0).min(100.0);
                             self.download.progress = p;
                             self.download.downloaded = downloaded;
